@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+   <DefaultDirectory>C:\</DefaultDirectory>
+   <Fs_ADC>100</Fs_ADC>
+   <Fs_IMU>100</Fs_IMU>
+</settings>
