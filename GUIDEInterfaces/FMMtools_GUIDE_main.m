@@ -650,6 +650,7 @@ function visualize_unsupervised_clustering(handles)
         if      strcmp('3D',unsup_vis_mode)
             scatter3(handles.unsupervised_clustering_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
         elseif  strcmp('2D',unsup_vis_mode)
+            axes(handles.unsupervised_clustering_pane);
             gscatter(v1,v2,IDX_color);
             xlabel(handles.unsupervised_clustering_pane,'C1');
             ylabel(handles.unsupervised_clustering_pane,'C2');
