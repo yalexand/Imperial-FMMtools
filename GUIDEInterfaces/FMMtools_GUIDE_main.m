@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 03-Mar-2016 15:58:24
+% Last Modified by GUIDE v2.5 04-Mar-2016 10:34:04
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -327,28 +327,15 @@ function unsupervised_clustering_go_Callback(hObject, eventdata, handles)
 dc = handles.data_controller;
 type_names = get(handles.unsupervised_clustering_type,'String');
 type = char(type_names(get(handles.unsupervised_clustering_type,'Value')));
-
+%
 n_clusters = get(handles.n_clusters_chooser,'Value')+1; % should be OK..
-
 [coords,IDX] = dc.perform_unsupervised_clustering(type,n_clusters);
-     v1 = coords(:,1);
-     v2 = coords(:,2);
-     v3 = coords(:,3);
-    color_1 = [1 0.2 0.4];
-    color_2 = [0.34 0.65 0.87];
-    color_3 = [0.5 0.5 0.5];
-    cmap = [color_1; color_2; color_3];
-    IDX_color = cmap(IDX,:);     
-%
-% visualize - 3D - ??
-%     scatter3(handles.unsupervised_clustering_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
-%
-% visualize - 2D
-    gscatter(v1,v2,IDX_color);
-    xlabel(handles.unsupervised_clustering_pane,'C1');
-    ylabel(handles.unsupervised_clustering_pane,'C2');
-    
+handles.coords = coords;
+handles.IDX = IDX;
+guidata(hObject, handles);
+visualize_unsupervised_clustering(handles);
 
+    
 % --- Executes on button press in pre_processing_setups.
 function pre_processing_setups_Callback(hObject, eventdata, handles)
 % hObject    handle to pre_processing_setups (see GCBO)
@@ -628,7 +615,33 @@ function update_record_pane(handles)
 
         colorbar('peer',AXES);
         
-        
+%-------------------------------------------------------------------------%        
+function visualize_unsupervised_clustering(handles)
+
+    coords = handles.coords;
+    IDX = handles.IDX;
+    
+    v1 = coords(:,1);
+    v2 = coords(:,2);
+    v3 = coords(:,3);
+    %
+    color_1 = [1 0.2 0.4];
+    color_2 = [0.34 0.65 0.87];
+    color_3 = [0.5 0.5 0.5];
+    cmap = [color_1; color_2; color_3];
+    IDX_color = cmap(IDX,:);
+    %
+    names = get(handles.unsupervised_clustering_vis_mode,'String');
+    unsup_vis_mode = char(names(get(handles.unsupervised_clustering_vis_mode,'Value')));
+    %        
+        if      strcmp('3D',unsup_vis_mode)
+            scatter3(handles.unsupervised_clustering_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
+        elseif  strcmp('2D',unsup_vis_mode)
+            gscatter(v1,v2,IDX_color);
+            xlabel(handles.unsupervised_clustering_pane,'C1');
+            ylabel(handles.unsupervised_clustering_pane,'C2');
+        end
+
 
 % --- Executes on selection change in corrX_chooser.
 function corrX_chooser_Callback(hObject, eventdata, handles)
@@ -689,6 +702,29 @@ unsupervised_clustering_go_Callback(hObject, eventdata, handles);
 % --- Executes during object creation, after setting all properties.
 function n_clusters_chooser_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to n_clusters_chooser (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in unsupervised_clustering_vis_mode.
+function unsupervised_clustering_vis_mode_Callback(hObject, eventdata, handles)
+% hObject    handle to unsupervised_clustering_vis_mode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns unsupervised_clustering_vis_mode contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from unsupervised_clustering_vis_mode
+visualize_unsupervised_clustering(handles);
+
+% --- Executes during object creation, after setting all properties.
+function unsupervised_clustering_vis_mode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to unsupervised_clustering_vis_mode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
