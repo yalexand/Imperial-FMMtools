@@ -61,8 +61,8 @@ classdef FMMtools_data_controller < handle
         current_omega_IMU;
                 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        Fs_ADC = 100; %Hz
-        Fs_IMU = 100; %Hz
+        Fs_ADC = 1024; %Hz
+        Fs_IMU = 64; %Hz
 
         preprocessing_types = {'Moving Average subtraction','...'};
         ADC_prprss_Moving_Average_Window = 5; % seconds!
