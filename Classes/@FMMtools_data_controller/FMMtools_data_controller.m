@@ -341,6 +341,9 @@ classdef FMMtools_data_controller < handle
 %-------------------------------------------------------------------------%  
         function [coords,IDX] = perform_unsupervised_clustering(obj,type,n_clusters,~)
             
+            coords = [];
+            IDX = [];
+            
             if isempty(obj.ADC_trails_features_data), return, end;
 
             [~,record_length] = size(obj.ADC_trails_features_data);

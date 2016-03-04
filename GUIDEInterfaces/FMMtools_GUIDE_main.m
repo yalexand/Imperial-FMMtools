@@ -456,6 +456,14 @@ cla(handles.features_pane,'reset');
 cla(handles.unsupervised_clustering_pane,'reset');
 %
 set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
+
+if isfield(handles,'coords')
+    handles.coords = [];
+end
+if isfield(handles,'IDX')
+    handles.IDX = [];
+end
+
 guidata(hObject, handles);
 
 % --------------------------------------------------------------------
@@ -618,8 +626,13 @@ function update_record_pane(handles)
 %-------------------------------------------------------------------------%        
 function visualize_unsupervised_clustering(handles)
 
-    coords = handles.coords;
-    IDX = handles.IDX;
+    try
+        coords = handles.coords;
+        IDX = handles.IDX;
+    catch
+        return;
+    end
+    if isempty(coords), return, end;
     
     v1 = coords(:,1);
     v2 = coords(:,2);
