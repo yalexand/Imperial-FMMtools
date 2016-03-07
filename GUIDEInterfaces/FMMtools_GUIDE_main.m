@@ -505,12 +505,21 @@ function update_record_pane(handles)
     if 1==rec_type_index
         rec = dc.current_data.ADC(:,channel_index);
         prp = dc.current_ADC_pre_processed(:,channel_index);
-        sgm = dc.current_ADC_segmented(:,channel_index)*0.05; %!!!                                
         
+        %sgm = dc.current_ADC_segmented(:,channel_index)*0.05; %!!!                                
+        
+        % to display segmented signal..
+        sgm = dc.current_ADC_segmented(:,channel_index);
+        t = quantile(rec,0.1) ;
+        z = rec(rec>t);
+        base = median(z(:));
+        cap = 3*std(z(:));
+        sgm = ones(length(sgm),1)*base + sgm*cap;        
+        % to display segmented signal..
+                
     elseif 2==rec_type_index
         rec = dc.current_data.IMU(:,channel_index);
-        prp = dc.current_IMU_pre_processed(:,channel_index);
-        sgm = dc.current_IMU_segmented(:,channel_index)*0.05; %!!!
+        prp = dc.current_IMU_pre_processed(:,channel_index);                
     end
         
     org_plot_mode = 'k-';

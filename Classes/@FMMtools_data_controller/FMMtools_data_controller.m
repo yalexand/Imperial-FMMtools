@@ -64,11 +64,13 @@ classdef FMMtools_data_controller < handle
         Fs_ADC = 1024; %Hz
         Fs_IMU = 64; %Hz
 
-        preprocessing_types = {'Moving Average subtraction','...'};
-        ADC_prprss_Moving_Average_Window = 5; % seconds!
+        preprocessing_types = {'freq.notch-comb + median','none'};
         ADC_prprss_Median_Size = 3;
+        ADC_prprss_notch_comb_fb = 39.1328; % base frequency, Hz
+        ADC_prprss_notch_comb_bw = 0.0022; % bandwidth        
         %
-        segmentation_types = {'Thresholding','...'};
+        segmentation_types = {'moving average subtraction + thresholding','...'};
+        ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Threshold = 0.2; % above noise trail
         ADC_segm_Minimal_Trail_Duration = 3;  %seconds
                         
@@ -154,6 +156,14 @@ classdef FMMtools_data_controller < handle
                 settings.DefaultDirectory = obj.DefaultDirectory;
                 settings.Fs_ADC = obj.Fs_ADC;
                 settings.Fs_IMU = obj.Fs_IMU;
+                %
+                settings.ADC_prprss_Median_Size = obj.ADC_prprss_Median_Size;
+                settings.ADC_prprss_notch_comb_fb = obj.ADC_prprss_notch_comb_fb;
+                settings.ADC_prprss_notch_comb_bw = obj.ADC_prprss_notch_comb_bw;
+                %
+                settings.ADC_segm_Moving_Average_Window = obj.ADC_segm_Moving_Average_Window;
+                settings.ADC_segm_Threshold = obj.ADC_segm_Threshold;
+                settings.ADC_segm_Minimal_Trail_Duration = obj.ADC_segm_Minimal_Trail_Duration;                                
             try
                 xml_write(fname,settings);
             catch
@@ -167,6 +177,14 @@ classdef FMMtools_data_controller < handle
                 obj.DefaultDirectory = settings.DefaultDirectory;                                                                  
                 obj.Fs_ADC = settings.Fs_ADC;
                 obj.Fs_IMU = settings.Fs_IMU;                
+                %
+                obj.ADC_prprss_Median_Size = settings.ADC_prprss_Median_Size;
+                obj.ADC_prprss_notch_comb_fb = settings.ADC_prprss_notch_comb_fb;
+                obj.ADC_prprss_notch_comb_bw = settings.ADC_prprss_notch_comb_bw;
+                %
+                obj.ADC_segm_Moving_Average_Window = settings.ADC_segm_Moving_Average_Window;
+                obj.ADC_segm_Threshold = settings.ADC_segm_Threshold;
+                obj.ADC_segm_Minimal_Trail_Duration = settings.ADC_segm_Minimal_Trail_Duration;                                                
              end
         end
 %-------------------------------------------------------------------------%
@@ -180,15 +198,29 @@ classdef FMMtools_data_controller < handle
             hw = waitbar(0,[type ' preprocessing ADC - please wait']);
             for k = 1 : num_ADC_channels
                 if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
-                s = obj.current_data.ADC(:,k);
-                s = medfilt2(s,[obj.ADC_prprss_Median_Size 1]);
-                avr_window = round(obj.ADC_prprss_Moving_Average_Window*obj.Fs_ADC);
                 %
-                if strcmp(type,'Moving Average subtraction')                
-                    [z,~] = TD_high_pass_filter( s, avr_window );
-                    obj.current_ADC_pre_processed(:,k) = z;
-                else % shouldn't happen
-                    obj.current_ADC_pre_processed(:,k) = s; % stupid
+                if strcmp(type,'none')
+                    obj.current_ADC_pre_processed(:,k) = obj.current_data.ADC(:,k);
+                elseif strcmp(type,'freq.notch-comb + median')
+                    %
+                    s = obj.current_data.ADC(:,k);
+                    %
+                    fb = obj.ADC_prprss_notch_comb_fb;
+                    bw = obj.ADC_prprss_notch_comb_bw;
+                    %
+                    for m=1:floor((obj.Fs_ADC/2)/fb)
+                        fo = fb*m;
+                        wo = fo/(obj.Fs_ADC/2);
+                        [b,a] = iirnotch(wo,bw);
+                        s = filtfilt(b,a,s);
+                    end
+                    %
+                    if obj.ADC_prprss_Median_Size >= 1
+                        mR = fix(obj.ADC_prprss_Median_Size);
+                        s = medfilt2(s,[mR 1]);
+                    end
+                    %
+                    obj.current_ADC_pre_processed(:,k) = s;
                 end
             end
             if ~isempty(hw), delete(hw), drawnow; end;
@@ -200,13 +232,18 @@ classdef FMMtools_data_controller < handle
             if isempty(obj.current_ADC_pre_processed), return, end;
 
             obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));
-
+                                             
             num_ADC_channels = size(obj.current_data.ADC,2);
             hw = waitbar(0,[type ' segmenting ADC - please wait']);
             for k = 1 : num_ADC_channels
                 if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
                 s = obj.current_ADC_pre_processed(:,k);
-                if strcmp(type,'Thresholding')       
+                if strcmp(type,'moving average subtraction + thresholding')
+                    %
+                    avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);
+                    %
+                    [s,~] = TD_high_pass_filter( s, avr_window );
+                    %                    
                     s2 = s.*s;
                     t = quantile(s2(:),obj.ADC_segm_Threshold);
                     z = s2(s2>t);
