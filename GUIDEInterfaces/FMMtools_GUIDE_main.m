@@ -501,7 +501,9 @@ function update_record_pane(handles)
 
         rec = [];
         prp = [];
-        sgm = [];    
+        sgm = [];
+        base = [];
+        cap = [];
     if 1==rec_type_index
         rec = dc.current_data.ADC(:,channel_index);
         prp = dc.current_ADC_pre_processed(:,channel_index);
@@ -521,10 +523,42 @@ function update_record_pane(handles)
         rec = dc.current_data.IMU(:,channel_index);
         prp = dc.current_IMU_pre_processed(:,channel_index);                
     end
-        
+           
     org_plot_mode = 'k-';
     prp_plot_mode = 'b-';
     sgm_plot_mode = 'r-';
+
+    % annotations
+    b_plot_mode = 'ms';
+    g_plot_mode = 'mo';
+    h_plot_mode = 'mx';
+    l_plot_mode = 'md';
+    s_plot_mode = 'm*';        
+    
+    annos = dc.current_annotation;
+    annos_times = dc.current_annotation_time;
+    
+    % 'bghls' - > '12345'
+    b = (annos==1);
+    t_b = annos_times(b);
+    %
+    g = (annos==2);
+    t_g = annos_times(g);
+    %
+    h = (annos==3);
+    t_h = annos_times(h);
+    %
+    l = (annos==4);
+    t_l = annos_times(l);
+    %
+    s = (annos==5);
+    t_s = annos_times(s);
+    
+    b=ones(size(t_b))*base;
+    g=ones(size(t_g))*base;
+    h=ones(size(t_h))*base;
+    l=ones(size(t_l))*base;
+    s=ones(size(t_s))*base;
         
     if 1==plot_type_index
         t =(1:length(rec))/Fs;
@@ -540,19 +574,39 @@ function update_record_pane(handles)
             plot(handles.record_pane,t,rec,org_plot_mode,t,prp,prp_plot_mode);
         elseif vis_org && vis_prp && vis_sgm
             YLIMS = [min([rec(:); prp(:); sgm(:)]) max([rec(:); prp(:); sgm(:)])];
-            plot(handles.record_pane,t,rec,org_plot_mode,t,prp,prp_plot_mode,t,sgm,sgm_plot_mode);
+            plot(handles.record_pane,t,rec,org_plot_mode,t,prp,prp_plot_mode,t,sgm,sgm_plot_mode, ... 
+                t_b,b,b_plot_mode, ...
+                t_g,g,g_plot_mode, ...
+                t_h,h,h_plot_mode, ...
+                t_l,l,l_plot_mode, ...
+                t_s,s,s_plot_mode);
         elseif vis_org && ~vis_prp && vis_sgm
             YLIMS = [min([rec(:); sgm(:)]) max([rec(:); sgm(:)])];
-            plot(handles.record_pane,t,rec,org_plot_mode,t,sgm,sgm_plot_mode);            
+            plot(handles.record_pane,t,rec,org_plot_mode,t,sgm,sgm_plot_mode, ...
+                t_b,b,b_plot_mode, ...
+                t_g,g,g_plot_mode, ...
+                t_h,h,h_plot_mode, ...
+                t_l,l,l_plot_mode, ...
+                t_s,s,s_plot_mode);            
         elseif ~vis_org && vis_prp && vis_sgm
             YLIMS = [min([prp(:); sgm(:)]) max([prp(:); sgm(:)])];
-            plot(handles.record_pane,t,prp,prp_plot_mode,t,sgm,sgm_plot_mode);
+            plot(handles.record_pane,t,prp,prp_plot_mode,t,sgm,sgm_plot_mode, ...
+                t_b,b,b_plot_mode, ...
+                t_g,g,g_plot_mode, ...
+                t_h,h,h_plot_mode, ...
+                t_l,l,l_plot_mode, ...
+                t_s,s,s_plot_mode);
         elseif ~vis_org && vis_prp && ~vis_sgm
             YLIMS = [min(prp(:)) max(prp(:))];
             plot(handles.record_pane,t,prp,prp_plot_mode);
         elseif ~vis_org && ~vis_prp && vis_sgm
             YLIMS = [min(sgm(:)) max(sgm(:))];
-            plot(handles.record_pane,t,sgm,sgm_plot_mode);            
+            plot(handles.record_pane,t,sgm,sgm_plot_mode, ...
+                t_b,b,b_plot_mode, ...
+                t_g,g,g_plot_mode, ...
+                t_h,h,h_plot_mode, ...
+                t_l,l,l_plot_mode, ...
+                t_s,s,s_plot_mode);
         end
                     
         grid(handles.record_pane,'on');

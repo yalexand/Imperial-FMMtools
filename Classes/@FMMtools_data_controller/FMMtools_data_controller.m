@@ -59,7 +59,10 @@ classdef FMMtools_data_controller < handle
         
         current_omega_ADC; % frequencies
         current_omega_IMU;
-                
+
+        current_annotation = [];
+        current_annotation_time = [];
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         Fs_ADC = 1024; %Hz
         Fs_IMU = 64; %Hz
@@ -124,6 +127,9 @@ classdef FMMtools_data_controller < handle
             obj.current_IMU_segmented = [];          
             obj.current_IMU_PSD = []; 
             obj.current_IMU_preprocessed_PSD = []; 
+            
+            obj.current_annotation = [];
+            obj.current_annotation_time = [];            
             
          end
 %-------------------------------------------------------------------------%        
@@ -260,8 +266,35 @@ classdef FMMtools_data_controller < handle
                     obj.current_ADC_segmented(:,k) = zeros(size(s)); % stupid
                 end
             end
+            
+            % extract annotation
+
+            event_times = obj.current_data.US(:,1);
+            event_types = obj.current_data.US(:,3); % 1,2,3,4,5 -> b,g,h,l,s            
+            obj.current_annotation = zeros(size(event_times,1),1);
+            obj.current_annotation_time = zeros(size(event_times,1),1);            
             if ~isempty(hw), delete(hw), drawnow; end;
             %
+            type_ind = 0; % for now...
+            %
+            for k = 1:length(event_times)
+                obj.current_annotation_time(k,1) = cell2mat(obj.current_data.US(k,1));
+                switch char(event_types(k,1))
+                    case 'b'                    
+                        type_ind = 1;                        
+                    case 'g'
+                        type_ind = 2;
+                    case 'h'
+                        type_ind = 3;
+                    case 'l'
+                        type_ind = 4;
+                    case 's'    
+                        type_ind = 5;                        
+                end
+                obj.current_annotation(k,1) = type_ind;
+            end
+            % extract annotation
+
         end
         
 %-------------------------------------------------------------------------%        
