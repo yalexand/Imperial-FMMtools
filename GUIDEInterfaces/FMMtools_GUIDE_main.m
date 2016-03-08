@@ -721,9 +721,10 @@ function visualize_unsupervised_clustering(handles)
     color_2 = [0.34 0.65 0.87];
     color_3 = [0.5 0.5 0.5];
     color_4 = [0 0 1];
-    color_5 = [0 1 0];    
+    color_5 = [0 1 0];
+    color_6 = [1 1 0];    
     
-    cmap = [color_1; color_2; color_3; color_4; color_5];
+    cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
     IDX_color = cmap(IDX,:);
     %
     names = get(handles.unsupervised_clustering_vis_mode,'String');

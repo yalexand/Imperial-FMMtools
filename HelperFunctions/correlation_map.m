@@ -17,7 +17,10 @@ function corrmap = correlation_map( u1,u2,W )
         corrmap(u1_coord,u2_coord) = corrmap(u1_coord,u2_coord) + 1;        
     end
     
-    corrmap = flipud(corrmap');    
+    corrmap = flipud(corrmap');
+    
+    corrmap = log10(corrmap*10);
+    corrmap(isinf(corrmap))=0;
     
 end
 
