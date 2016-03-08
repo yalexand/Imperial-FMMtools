@@ -499,12 +499,25 @@ function update_record_pane(handles)
         Fs = dc.Fs_IMU;
     end
 
+        org_plot_mode = 'k-';
+        prp_plot_mode = 'b-';
+        sgm_plot_mode = 'r-';
+
+        % annotations
+        b_plot_mode = 'gs';
+        g_plot_mode = 'go';
+        h_plot_mode = 'gx';
+        l_plot_mode = 'gd';
+        s_plot_mode = 'g*';     
+    
         rec = [];
         prp = [];
         sgm = [];
         base = [];
         cap = [];
+        
     if 1==rec_type_index
+        
         rec = dc.current_data.ADC(:,channel_index);
         prp = dc.current_ADC_pre_processed(:,channel_index);
         
@@ -517,49 +530,52 @@ function update_record_pane(handles)
         base = median(z(:));
         cap = 3*std(z(:));
         sgm = ones(length(sgm),1)*base + sgm*cap;        
-        % to display segmented signal..
-                
+        
+        %
+        annos = dc.current_annotation;
+        annos_times = dc.current_annotation_time;
+
+        % 'bghls' - > '12345'
+        b = (annos==1);
+        t_b = annos_times(b);
+        %
+        g = (annos==2);
+        t_g = annos_times(g);
+        %
+        h = (annos==3);
+        t_h = annos_times(h);
+        %
+        l = (annos==4);
+        t_l = annos_times(l);
+        %
+        s = (annos==5);
+        t_s = annos_times(s);
+
+        b=ones(size(t_b))*base;
+        g=ones(size(t_g))*base;
+        h=ones(size(t_h))*base;
+        l=ones(size(t_l))*base;
+        s=ones(size(t_s))*base;
+        
     elseif 2==rec_type_index
+        
         rec = dc.current_data.IMU(:,channel_index);
         prp = dc.current_IMU_pre_processed(:,channel_index);                
-    end
-           
-    org_plot_mode = 'k-';
-    prp_plot_mode = 'b-';
-    sgm_plot_mode = 'r-';
-
-    % annotations
-    b_plot_mode = 'ms';
-    g_plot_mode = 'mo';
-    h_plot_mode = 'mx';
-    l_plot_mode = 'md';
-    s_plot_mode = 'm*';        
-    
-    annos = dc.current_annotation;
-    annos_times = dc.current_annotation_time;
-    
-    % 'bghls' - > '12345'
-    b = (annos==1);
-    t_b = annos_times(b);
-    %
-    g = (annos==2);
-    t_g = annos_times(g);
-    %
-    h = (annos==3);
-    t_h = annos_times(h);
-    %
-    l = (annos==4);
-    t_l = annos_times(l);
-    %
-    s = (annos==5);
-    t_s = annos_times(s);
-    
-    b=ones(size(t_b))*base;
-    g=ones(size(t_g))*base;
-    h=ones(size(t_h))*base;
-    l=ones(size(t_l))*base;
-    s=ones(size(t_s))*base;
         
+        b = [];
+        t_b = [];
+        g = [];
+        t_g = [];
+        h = [];
+        t_h = [];
+        l = [];
+        t_l = [];
+        s = [];
+        t_s = [];
+                
+        sgm = zeros(size(rec));
+    end
+                             
     if 1==plot_type_index
         t =(1:length(rec))/Fs;
                                 
@@ -704,7 +720,10 @@ function visualize_unsupervised_clustering(handles)
     color_1 = [1 0.2 0.4];
     color_2 = [0.34 0.65 0.87];
     color_3 = [0.5 0.5 0.5];
-    cmap = [color_1; color_2; color_3];
+    color_4 = [0 0 1];
+    color_5 = [0 1 0];    
+    
+    cmap = [color_1; color_2; color_3; color_4; color_5];
     IDX_color = cmap(IDX,:);
     %
     names = get(handles.unsupervised_clustering_vis_mode,'String');

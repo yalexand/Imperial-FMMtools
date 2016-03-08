@@ -74,8 +74,8 @@ classdef FMMtools_data_controller < handle
         %
         segmentation_types = {'moving average subtraction + thresholding','...'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
-        ADC_segm_Threshold = 0.2; % above noise trail
-        ADC_segm_Minimal_Trail_Duration = 3;  %seconds
+        ADC_segm_Threshold = 0.9; % above noise trail
+        ADC_segm_Minimal_Trail_Duration = 0.5;  %seconds
                         
     end    
         
@@ -251,12 +251,16 @@ classdef FMMtools_data_controller < handle
                     [s,~] = TD_high_pass_filter( s, avr_window );
                     %                    
                     s2 = s.*s;
+                    %                    
                     t = quantile(s2(:),obj.ADC_segm_Threshold);
-                    z = s2(s2>t);
-                    t = median(z(:)) + 3*std(z(:));
+                    %
+                    z = s2(s2<t);
+                    t = median(z(:)) + 6*std(z(:));
                     %                                        
                     z = (s2 > t);
-                    min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC);
+                    %
+                    min_size = round(obj.ADC_segm_Minimal_Trail_Duration/4*obj.Fs_ADC); % sic!
+                    %
                     SE = strel('line',min_size,90);
                     z = imclose(z,SE);
                     z = bwareaopen(z,min_size);
@@ -270,7 +274,19 @@ classdef FMMtools_data_controller < handle
             % extract annotation
 
             event_times = obj.current_data.US(:,1);
-            event_types = obj.current_data.US(:,3); % 1,2,3,4,5 -> b,g,h,l,s            
+            
+            % unfortunately "types" index can be 2 or 3..
+            event_type_ind = 3;
+            tokens = unique(obj.current_data.US(:,2)); % check if it is 2
+            if ismember('b',tokens) || ...
+               ismember('g',tokens) || ...
+               ismember('h',tokens) || ...
+               ismember('l',tokens) || ...
+               ismember('s',tokens)
+               event_type_ind = 2;
+            end
+            
+            event_types = obj.current_data.US(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
             obj.current_annotation = zeros(size(event_times,1),1);
             obj.current_annotation_time = zeros(size(event_times,1),1);            
             if ~isempty(hw), delete(hw), drawnow; end;
