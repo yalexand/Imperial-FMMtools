@@ -309,15 +309,20 @@ guidata(hObject, handles);
 %
 visualize_current_ADC_trails_features_data(handles);
 %
-set(handles.corrX_chooser,'String',dc.ADC_feature_names(5:length(dc.ADC_feature_names)));
-set(handles.corrY_chooser,'String',dc.ADC_feature_names(5:length(dc.ADC_feature_names)));
+set(handles.corrX_chooser,'String',dc.ADC_feature_names(7:length(dc.ADC_feature_names)));
+set(handles.corrY_chooser,'String',dc.ADC_feature_names(7:length(dc.ADC_feature_names)));
 
 % --- Executes on button press in supervised_classification_go.
 function supervised_classification_go_Callback(hObject, eventdata, handles)
 % hObject    handle to supervised_classification_go (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+dc = handles.data_controller;
+[sup_coords,sup_IDX] = dc.get_canons_for_supervised_classification_training_data;
+handles.sup_coords = sup_coords;
+handles.sup_IDX = sup_IDX;
+guidata(hObject, handles);
+visualize_supervised_clustering(handles);
 
 % --- Executes on button press in unsupervised_clustering_go.
 function unsupervised_clustering_go_Callback(hObject, eventdata, handles)
@@ -685,7 +690,7 @@ function update_record_pane(handles)
                 
         piX = get(handles.corrX_chooser,'Value');
         piY = get(handles.corrY_chooser,'Value');        
-        offset = 5;                    
+        offset = 7;                    
         u1 = cell2mat(dc.ADC_trails_features_data(:,offset+piX-1));
         u2 = cell2mat(dc.ADC_trails_features_data(:,offset+piY-1));
                 
@@ -738,6 +743,32 @@ function visualize_unsupervised_clustering(handles)
             xlabel(handles.unsupervised_clustering_pane,'C1');
             ylabel(handles.unsupervised_clustering_pane,'C2');
         end
+%-------------------------------------------------------------------------%        
+function visualize_supervised_clustering(handles)
+
+    try
+        coords = handles.sup_coords;
+        IDX = handles.sup_IDX;
+    catch
+        return;
+    end
+    if isempty(coords), return, end;
+    
+    v1 = coords(:,1);
+    v2 = coords(:,2);
+    v3 = coords(:,3);
+    %
+    color_1 = [1 0.2 0.4];
+    color_2 = [0.34 0.65 0.87];
+    color_3 = [0.5 0.5 0.5];
+    color_4 = [0 0 1];
+    color_5 = [0 1 0];
+    color_6 = [1 1 0];    
+    
+    cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
+    IDX_color = cmap(IDX,:);
+    %
+    scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
 
 
 % --- Executes on selection change in corrX_chooser.

@@ -333,6 +333,7 @@ classdef FMMtools_data_controller < handle
                 s = s/std(fl(:)); % normalize by its std
                 %
                 z_lab = bwlabel(z);
+                t =(1:length(z))'/obj.Fs_ADC;
                 for l=1:max(z_lab)
                     s_l = s(z_lab==l);
                     p1 = wentropy(s_l,'shannon')/length(s_l);
@@ -340,11 +341,16 @@ classdef FMMtools_data_controller < handle
                         [C,L] = wavedec(s_l,4,'sym4');
                         [Ea,Ed] = wenergy(C,L); %these are normalized
                     p3 = Ea;
-                    p4 = Ed; % this one, - contains 4 numbers                    
+                    p4 = Ed; % this one, - contains 4 numbers
+                    %
+                    % start time, end time...
+                    dt = t(z_lab==l);
+                    t1 = min(dt(:));
+                    t2 = max(dt(:));
                     %
                     % this is the place to calculate more features ...
                     %                    
-                    feats_k = [feats_k; [k l length(s_l) p1 p2 p3 p4]];
+                    feats_k = [feats_k; [k l length(s_l) t1 t2 p1 p2 p3 p4]];
                 end
                 feats = [feats; feats_k];
             end
@@ -434,7 +440,7 @@ classdef FMMtools_data_controller < handle
 
             [~,record_length] = size(obj.ADC_trails_features_data);
             
-            data = cell2mat(obj.ADC_trails_features_data(:,5:record_length));
+            data = cell2mat(obj.ADC_trails_features_data(:,7:record_length));
             
             switch type
                 
@@ -448,7 +454,43 @@ classdef FMMtools_data_controller < handle
             end                        
                         
         end
+%-------------------------------------------------------------------------%  
+        function [coords,IDX] = get_canons_for_supervised_classification_training_data(obj,~,~)
+            
+            coords = [];
+            IDX = [];
+            
+            if isempty(obj.ADC_trails_features_data), return, end;
+
+            [~,record_length] = size(obj.ADC_trails_features_data);
+            
+            all_data = cell2mat(obj.ADC_trails_features_data(:,7:record_length));
+            t1 = cell2mat(obj.ADC_trails_features_data(:,5));
+            t2 = cell2mat(obj.ADC_trails_features_data(:,6));
+            
+            anno = obj.current_annotation;
+            anno_t = obj.current_annotation_time;
+            
+            % display annotated data in canonic coords
+            data = [];
+            IDX = [];
+            for k = 1:length(t1)
+                for a=1:length(anno_t)
+                    if t1(k) <= anno_t(a) && anno_t(a) < t2(k)                         
+                        IDX = [IDX; anno(a)];
+                        data = [data; all_data(k,:)];
+                        break;
+                    end
+                end
+            end
+            %
+            [~,score] = pca(data);
+            data = score;
+            [~,~,stats] = manova1(data,IDX);            
+            coords = stats.canon;
+                                    
+        end        
+%-------------------------------------------------------------------------%          
     end % methods
-%-------------------------------------------------------------------------%      
             
 end
