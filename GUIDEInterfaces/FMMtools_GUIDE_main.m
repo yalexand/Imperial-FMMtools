@@ -437,21 +437,17 @@ function load_single_subject_menu_Callback(hObject, eventdata, handles)
 % hObject    handle to load_single_subject_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-data_controller = handles.data_controller;
-data_controller.load_single_subject(true);
-
 pre_processing_type_index = get(handles.pre_processing_type,'Value');
 segmentation_type_index = get(handles.segmentation_type,'Value');
 pre_processing_type_string = get(handles.pre_processing_type,'String');
 segmentation_type_string = get(handles.segmentation_type,'String');
 %
 dc = handles.data_controller;
+dc.load_single_subject(true);
 dc.pre_process_ADC(pre_processing_type_string{pre_processing_type_index});
 dc.segment_ADC(segmentation_type_string{segmentation_type_index});
-%
 dc.pre_process_IMU([]); % that should be done better (?) - for now returns zeros
 dc.segment_IMU([]);
-%
 dc.calculate_PSDs;
 %
 update_record_pane(handles);
@@ -461,7 +457,7 @@ cla(handles.features_pane,'reset');
 cla(handles.unsupervised_clustering_pane,'reset');
 %
 set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
-
+%
 if isfield(handles,'coords')
     handles.coords = [];
 end
