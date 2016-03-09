@@ -63,7 +63,12 @@ classdef FMMtools_data_controller < handle
         current_annotation = [];
         current_annotation_time = [];
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %
+        subj_data = [];
+        subj_filenames = [];
+        %
+                
+        %
         Fs_ADC = 1024; %Hz
         Fs_IMU = 64; %Hz
 
@@ -129,8 +134,11 @@ classdef FMMtools_data_controller < handle
             obj.current_IMU_preprocessed_PSD = []; 
             
             obj.current_annotation = [];
-            obj.current_annotation_time = [];            
+            obj.current_annotation_time = [];
             
+            obj.current_omega_ADC = [];
+            obj.current_omega_IMU = [];
+                        
          end
 %-------------------------------------------------------------------------%        
         function load_single_subject(obj,verbose,~)
@@ -138,15 +146,112 @@ classdef FMMtools_data_controller < handle
             [filename,pathname] = uigetfile({'*.mat','Subject Records Files'},'Select data file',obj.DefaultDirectory);
             if filename == 0, return, end;       
 
-            obj.clear_current_data;                                    
+            obj.clear_current_data;
+            obj.subj_data = [];
+            obj.subj_filenames = [];            
+            
             obj.ADC_trails_features_data = [];
             obj.open_datafile([pathname filesep filename]);
                  
             obj.current_filename = filename;                    
             obj.DefaultDirectory = pathname;
             
-        end      
- %-------------------------------------------------------------------------%           
+        end
+%-------------------------------------------------------------------------%        
+        function res = load_multiple_subjects(obj,prp_type,sgm_type,verbose,~)
+                     
+        res = false;
+            
+        % get list of files...
+        [filenames, pathname] = uigetfile('*.mat','Select data files',obj.DefaultDirectory,'MultiSelect','on');
+        if pathname == 0, return, end;
+                     
+        filenames = sort_nat(cellstr(filenames));
+
+        hw = [];
+        waitmsg = 'Loading ...';
+        if verbose
+            hw = waitbar(0,waitmsg);
+        end 
+                                            
+        obj.subj_data = [];
+        
+        for k = 1:numel(filenames)                                                            
+            if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end;
+                obj.clear_current_data;                   
+                obj.current_filename = char(filenames{k});                
+                obj.open_datafile([pathname filesep obj.current_filename]);
+                obj.pre_process_ADC(prp_type);
+                obj.segment_ADC(sgm_type);
+                obj.pre_process_IMU([]); 
+                obj.segment_IMU([]);
+                obj.calculate_PSDs;                            
+                    %
+                    subj_elem.filename = obj.current_filename;                                
+                    subj_elem.data = obj.current_data;
+                    %
+                    subj_elem.IMU_OK = obj.current_IMU_OK;
+                    subj_elem.ADC_OK = obj.current_ADC_OK;
+                    %
+                    subj_elem.ADC_pre_processed = obj.current_ADC_pre_processed;        
+                    subj_elem.ADC_segmented = obj.current_ADC_segmented;                
+                    subj_elem.ADC_PSD = obj.current_ADC_PSD;                
+                    subj_elem.ADC_preprocessed_PSD = obj.current_ADC_preprocessed_PSD;
+                    %
+                    subj_elem.IMU_pre_processed = obj.current_IMU_pre_processed;        
+                    subj_elem.IMU_segmented = obj.current_IMU_segmented;
+                    subj_elem.IMU_PSD = obj.current_IMU_PSD;
+                    subj_elem.IMU_preprocessed_PSD = obj.current_IMU_preprocessed_PSD;
+                    %
+                    subj_elem.annotation  = obj.current_annotation;
+                    subj_elem.annotation_time = obj.current_annotation_time;
+                    %
+                    subj_elem.omega_ADC = obj.current_omega_ADC;
+                    subj_elem.omega_IMU = obj.current_omega_IMU;                    
+                    %
+                obj.subj_data = [obj.subj_data; subj_elem];                                
+        end
+        if ~isempty(hw), delete(hw), drawnow; end;
+                
+        obj.subj_filenames = filenames;
+        
+        obj.DefaultDirectory = pathname;
+        obj.ADC_trails_features_data = [];
+        res = true;
+
+        end     
+%-------------------------------------------------------------------------%        
+function switch_current_to_subject(obj,data_filename)
+    
+    [~,ind]=ind2sub(size(obj.subj_filenames),strmatch(data_filename,obj.subj_filenames,'exact'));
+    
+    subj_elem = obj.subj_data(ind);
+    
+    obj.current_filename = subj_elem.filename;                                
+    obj.current_data = subj_elem.data;
+    %
+    obj.current_IMU_OK = subj_elem.IMU_OK;
+    obj.current_ADC_OK = subj_elem.ADC_OK;
+    %
+    obj.current_ADC_pre_processed = subj_elem.ADC_pre_processed;        
+    obj.current_ADC_segmented = subj_elem.ADC_segmented;                
+    obj.current_ADC_PSD = subj_elem.ADC_PSD;                
+    obj.current_ADC_preprocessed_PSD = subj_elem.ADC_preprocessed_PSD;
+    %
+    obj.current_IMU_pre_processed = subj_elem.IMU_pre_processed;        
+    obj.current_IMU_segmented = subj_elem.IMU_segmented;
+    obj.current_IMU_PSD = subj_elem.IMU_PSD;
+    obj.current_IMU_preprocessed_PSD = subj_elem.IMU_preprocessed_PSD;
+    %
+    obj.current_annotation  = subj_elem.annotation;
+    obj.current_annotation_time = subj_elem.annotation_time;
+    %
+    obj.current_omega_ADC = subj_elem.omega_ADC;
+    obj.current_omega_IMU = subj_elem.omega_IMU;
+        
+end
+        
+%-------------------------------------------------------------------------%
         function open_datafile(obj,full_filename,~)
             %
             % to do
@@ -272,12 +377,20 @@ classdef FMMtools_data_controller < handle
             end
             
             % extract annotation
+            US_data = [];
+            %curate
+            for k = 1:size(obj.current_data.US,1)
+                rec = obj.current_data.US(k,:);
+                if ~isempty(cell2mat(rec(1)))
+                    US_data = [US_data; rec];
+                end
+            end
 
-            event_times = obj.current_data.US(:,1);
+            event_times = US_data(:,1);
             
             % unfortunately "types" index can be 2 or 3..
             event_type_ind = 3;
-            tokens = unique(obj.current_data.US(:,2)); % check if it is 2
+            tokens = unique(US_data(:,2)); % check if it is 2
             if ismember('b',tokens) || ...
                ismember('g',tokens) || ...
                ismember('h',tokens) || ...
@@ -286,7 +399,7 @@ classdef FMMtools_data_controller < handle
                event_type_ind = 2;
             end
             
-            event_types = obj.current_data.US(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
+            event_types = US_data(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
             obj.current_annotation = zeros(size(event_times,1),1);
             obj.current_annotation_time = zeros(size(event_times,1),1);            
             if ~isempty(hw), delete(hw), drawnow; end;
@@ -294,17 +407,17 @@ classdef FMMtools_data_controller < handle
             type_ind = 0; % for now...
             %
             for k = 1:length(event_times)
-                obj.current_annotation_time(k,1) = cell2mat(obj.current_data.US(k,1));
+                obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
                 switch char(event_types(k,1))
-                    case 'b'                    
+                    case {'b' 'B'}
                         type_ind = 1;                        
-                    case 'g'
+                    case {'g' 'G'}
                         type_ind = 2;
-                    case 'h'
+                    case {'h' 'H'}
                         type_ind = 3;
-                    case 'l'
+                    case {'l' 'L'}
                         type_ind = 4;
-                    case 's'    
+                    case {'s' 'S'}
                         type_ind = 5;                        
                 end
                 obj.current_annotation(k,1) = type_ind;

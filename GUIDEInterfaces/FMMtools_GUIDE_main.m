@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 04-Mar-2016 10:34:04
+% Last Modified by GUIDE v2.5 09-Mar-2016 16:00:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -460,10 +460,14 @@ set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
 %
 if isfield(handles,'coords')
     handles.coords = [];
+    handles.sup_coords = [];
 end
 if isfield(handles,'IDX')
     handles.IDX = [];
+    handles.sup_IDX = [];    
 end
+
+set(handles.subject_list,'String',dc.current_filename);
 
 guidata(hObject, handles);
 
@@ -761,11 +765,25 @@ function visualize_supervised_clustering(handles)
     color_5 = [0 1 0];
     color_6 = [1 1 0];    
     
+%     cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
+%     IDX_color = cmap(IDX,:);
+%     %
+%     scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
+
     cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
     IDX_color = cmap(IDX,:);
     %
-    scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
-
+    names = get(handles.supervised_clustering_vis_mode,'String');
+    sup_vis_mode = char(names(get(handles.supervised_clustering_vis_mode,'Value')));
+    %        
+        if      strcmp('3D',sup_vis_mode)
+            scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
+        elseif  strcmp('2D',sup_vis_mode)
+            axes(handles.supervised_classification_pane);
+            gscatter(v1,v2,IDX_color);
+            xlabel(handles.supervised_classification_pane,'C1');
+            ylabel(handles.supervised_classification_pane,'C2');
+        end
 
 % --- Executes on selection change in corrX_chooser.
 function corrX_chooser_Callback(hObject, eventdata, handles)
@@ -849,6 +867,110 @@ visualize_unsupervised_clustering(handles);
 % --- Executes during object creation, after setting all properties.
 function unsupervised_clustering_vis_mode_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to unsupervised_clustering_vis_mode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --------------------------------------------------------------------
+function load_multiple_subjects_Callback(hObject, eventdata, handles)
+% hObject    handle to load_multiple_subjects (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+pre_processing_type_index = get(handles.pre_processing_type,'Value');
+segmentation_type_index = get(handles.segmentation_type,'Value');
+pre_processing_type_string = get(handles.pre_processing_type,'String');
+segmentation_type_string = get(handles.segmentation_type,'String');
+%
+dc = handles.data_controller;
+res  = dc.load_multiple_subjects(pre_processing_type_string{pre_processing_type_index}, ...
+                            segmentation_type_string{segmentation_type_index},true);
+if ~res, return, end;
+                        
+update_record_pane(handles);
+% clear panes
+cla(handles.supervised_classification_pane,'reset');
+cla(handles.features_pane,'reset');
+cla(handles.unsupervised_clustering_pane,'reset');
+%
+set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
+%
+if isfield(handles,'coords')
+    handles.coords = [];
+    handles.sup_coords = [];
+end
+if isfield(handles,'IDX')
+    handles.IDX = [];
+    handles.sup_IDX = [];    
+end
+
+set(handles.subject_list,'String',dc.subj_filenames);
+
+guidata(hObject, handles);
+
+
+% --- Executes on selection change in subject_list.
+function subject_list_Callback(hObject, eventdata, handles)
+% hObject    handle to subject_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns subject_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from subject_list
+subject_list_string = get(handles.subject_list,'String');
+data_filename = subject_list_string(get(handles.subject_list,'Value'));
+dc = handles.data_controller;
+dc.switch_current_to_subject(data_filename);
+update_record_pane(handles);
+% clear panes
+cla(handles.supervised_classification_pane,'reset');
+cla(handles.features_pane,'reset');
+cla(handles.unsupervised_clustering_pane,'reset');
+%
+set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
+%
+if isfield(handles,'coords')
+    handles.coords = [];
+    handles.sup_coords = [];
+end
+if isfield(handles,'IDX')
+    handles.IDX = [];
+    handles.sup_IDX = [];    
+end
+
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function subject_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to subject_list (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in supervised_clustering_vis_mode.
+function supervised_clustering_vis_mode_Callback(hObject, eventdata, handles)
+% hObject    handle to supervised_clustering_vis_mode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns supervised_clustering_vis_mode contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from supervised_clustering_vis_mode
+visualize_supervised_clustering(handles);
+
+% --- Executes during object creation, after setting all properties.
+function supervised_clustering_vis_mode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to supervised_clustering_vis_mode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
