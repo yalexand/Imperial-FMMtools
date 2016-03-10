@@ -141,7 +141,7 @@ classdef FMMtools_data_controller < handle
                         
          end
 %-------------------------------------------------------------------------%        
-        function load_single_subject(obj,verbose,~)
+        function load_single_subject(obj,prp_type,sgm_type,~)
                         
             [filename,pathname] = uigetfile({'*.mat','Subject Records Files'},'Select data file',obj.DefaultDirectory);
             if filename == 0, return, end;       
@@ -155,7 +155,39 @@ classdef FMMtools_data_controller < handle
                  
             obj.current_filename = filename;                    
             obj.DefaultDirectory = pathname;
-            
+            %
+            obj.pre_process_ADC(prp_type);
+            obj.segment_ADC(sgm_type);
+            obj.pre_process_IMU([]); % that should be done better (?) - for now returns zeros
+            obj.segment_IMU([]);
+            obj.calculate_PSDs;
+            %
+            % fill 1-st element in data struct
+                    subj_elem.filename = obj.current_filename;                                
+                    subj_elem.data = obj.current_data;
+                    %
+                    subj_elem.IMU_OK = obj.current_IMU_OK;
+                    subj_elem.ADC_OK = obj.current_ADC_OK;
+                    %
+                    subj_elem.ADC_pre_processed = obj.current_ADC_pre_processed;        
+                    subj_elem.ADC_segmented = obj.current_ADC_segmented;                
+                    subj_elem.ADC_PSD = obj.current_ADC_PSD;                
+                    subj_elem.ADC_preprocessed_PSD = obj.current_ADC_preprocessed_PSD;
+                    %
+                    subj_elem.IMU_pre_processed = obj.current_IMU_pre_processed;        
+                    subj_elem.IMU_segmented = obj.current_IMU_segmented;
+                    subj_elem.IMU_PSD = obj.current_IMU_PSD;
+                    subj_elem.IMU_preprocessed_PSD = obj.current_IMU_preprocessed_PSD;
+                    %
+                    subj_elem.annotation  = obj.current_annotation;
+                    subj_elem.annotation_time = obj.current_annotation_time;
+                    %
+                    subj_elem.omega_ADC = obj.current_omega_ADC;
+                    subj_elem.omega_IMU = obj.current_omega_IMU;                    
+                    %
+                obj.subj_data = [obj.subj_data; subj_elem];
+                obj.subj_filenames = cellstr(filename); 
+                        
         end
 %-------------------------------------------------------------------------%        
         function res = load_multiple_subjects(obj,prp_type,sgm_type,verbose,~)
@@ -221,7 +253,7 @@ classdef FMMtools_data_controller < handle
 
         end     
 %-------------------------------------------------------------------------%        
-function switch_current_to_subject(obj,data_filename)
+function switch_current_to_subject(obj,data_filename,~)
     
     [~,ind]=ind2sub(size(obj.subj_filenames),strmatch(data_filename,obj.subj_filenames,'exact'));
     
@@ -432,56 +464,59 @@ end
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
 
             feats = [];
-            
-            hw = waitbar(0,'Extracting trails features - please wait');
-            num_ADC_channels = size(obj.current_data.ADC,2);
-            for k = 1 : num_ADC_channels
-                if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
-                feats_k = [];
-                s = obj.current_ADC_pre_processed(:,k); 
-                z = obj.current_ADC_segmented(:,k);
-                %
-                if 1==unique(z), continue, end; % safety - skip "k" if whole k-trail was segmented
-                %
-                % first, one needs to normalize the signal, e.g. by dividing it by the
-                % intensity of its fluctuation level
-                fl = abs(s(~z));
-                fl_t = quantile(fl(:),0.75);
-                fl = fl(fl<fl_t); % get the weakest 75% part
-                s = s/std(fl(:)); % normalize by its std
-                %
-                z_lab = bwlabel(z);
-                %                
-                t =(1:length(z))'/obj.Fs_ADC;
-                for l=1:max(z_lab)
-                    s_l = s(z_lab==l);
-                    p1 = wentropy(s_l,'shannon')/length(s_l);
-                    p2 = wentropy(s_l,'log energy')/length(s_l);
-                        [C,L] = wavedec(s_l,4,'sym4');
-                        [Ea,Ed] = wenergy(C,L); %these are normalized
-                    p3 = Ea;
-                    p4 = Ed; % this one, - contains 4 numbers
+            fnames = [];
+            for subj_ind = 1:length(obj.subj_filenames)
+                obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
+                hw = waitbar(0,'Extracting trails features - please wait');
+                num_ADC_channels = size(obj.current_data.ADC,2);        
+                for k = 1 : num_ADC_channels
+                    if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
+                    feats_k = [];
+                    s = obj.current_ADC_pre_processed(:,k); 
+                    z = obj.current_ADC_segmented(:,k);
                     %
-                    % start time, end time...
-                    dt = t(z_lab==l);
-                    t1 = min(dt(:));
-                    t2 = max(dt(:));
+                    if 1==unique(z), continue, end; % safety - skip "k" if whole k-trail was segmented
                     %
-                    % this is the place to calculate more features ...
-                    %                    
-                    feats_k = [feats_k; [k l length(s_l) t1 t2 p1 p2 p3 p4]];                    
+                    % first, one needs to normalize the signal, e.g. by dividing it by the
+                    % intensity of its fluctuation level
+                    fl = abs(s(~z));
+                    fl_t = quantile(fl(:),0.75);
+                    fl = fl(fl<fl_t); % get the weakest 75% part
+                    s = s/std(fl(:)); % normalize by its std
+                    %
+                    z_lab = bwlabel(z);
+                    %                
+                    t =(1:length(z))'/obj.Fs_ADC;
+                    for l=1:max(z_lab)
+                        s_l = s(z_lab==l);
+                        p1 = wentropy(s_l,'shannon')/length(s_l);
+                        p2 = wentropy(s_l,'log energy')/length(s_l);
+                            [C,L] = wavedec(s_l,4,'sym4');
+                            [Ea,Ed] = wenergy(C,L); %these are normalized
+                        p3 = Ea;
+                        p4 = Ed; % this one, - contains 4 numbers
+                        %
+                        % start time, end time...
+                        dt = t(z_lab==l);
+                        t1 = min(dt(:));
+                        t2 = max(dt(:));
+                        %
+                        % this is the place to calculate more features ...
+                        %                    
+                        feats_k = [feats_k; [k l length(s_l) t1 t2 p1 p2 p3 p4]];
+                        fnames = [fnames; cellstr(obj.current_filename)];
+                    end
+                    feats = [feats; feats_k];
                 end
-                feats = [feats; feats_k];
+                if ~isempty(hw), delete(hw), drawnow; end;
             end
-            if ~isempty(hw), delete(hw), drawnow; end;
             %
             % add new features names here
             feature_names = {'filename','detector_index','trail_index','trail_length', ...
                 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
             %
-            Nrec = size(feats,1);
-            trails_features = [cellstr(repmat(obj.current_filename,Nrec,1)) num2cell(feats)];            
-                                                
+            trails_features = [fnames num2cell(feats)];            
+
         end
 %-------------------------------------------------------------------------%                
         function pre_process_IMU(obj,type,~)
@@ -574,7 +609,7 @@ end
                         
         end
 %-------------------------------------------------------------------------%  
-        function [coords,IDX] = get_canons_for_supervised_classification_training_data(obj,~,~)
+        function [coords,IDX] = get_canons_for_supervised_classification_US_anno_training_data(obj,~,~)
             
             coords = [];
             IDX = [];
@@ -595,7 +630,7 @@ end
             IDX = [];
             for k = 1:length(t1)
                 for a=1:length(anno_t)
-                    if t1(k) <= anno_t(a) && anno_t(a) < t2(k)                         
+                    if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
                         IDX = [IDX; anno(a)];
                         data = [data; all_data(k,:)];
                         break;

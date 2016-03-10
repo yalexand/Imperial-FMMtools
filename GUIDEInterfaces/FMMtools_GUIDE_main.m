@@ -318,7 +318,7 @@ function supervised_classification_go_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-[sup_coords,sup_IDX] = dc.get_canons_for_supervised_classification_training_data;
+[sup_coords,sup_IDX] = dc.get_canons_for_supervised_classification_US_anno_training_data;
 handles.sup_coords = sup_coords;
 handles.sup_IDX = sup_IDX;
 guidata(hObject, handles);
@@ -340,7 +340,7 @@ handles.IDX = IDX;
 guidata(hObject, handles);
 visualize_unsupervised_clustering(handles);
 
-    
+
 % --- Executes on button press in pre_processing_setups.
 function pre_processing_setups_Callback(hObject, eventdata, handles)
 % hObject    handle to pre_processing_setups (see GCBO)
@@ -443,12 +443,8 @@ pre_processing_type_string = get(handles.pre_processing_type,'String');
 segmentation_type_string = get(handles.segmentation_type,'String');
 %
 dc = handles.data_controller;
-dc.load_single_subject(true);
-dc.pre_process_ADC(pre_processing_type_string{pre_processing_type_index});
-dc.segment_ADC(segmentation_type_string{segmentation_type_index});
-dc.pre_process_IMU([]); % that should be done better (?) - for now returns zeros
-dc.segment_IMU([]);
-dc.calculate_PSDs;
+dc.load_single_subject(pre_processing_type_string{pre_processing_type_index}, ...
+    segmentation_type_string{segmentation_type_index});
 %
 update_record_pane(handles);
 % clear panes
@@ -927,23 +923,9 @@ data_filename = subject_list_string(get(handles.subject_list,'Value'));
 dc = handles.data_controller;
 dc.switch_current_to_subject(data_filename);
 update_record_pane(handles);
-% clear panes
-cla(handles.supervised_classification_pane,'reset');
-cla(handles.features_pane,'reset');
-cla(handles.unsupervised_clustering_pane,'reset');
 %
 set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
 %
-if isfield(handles,'coords')
-    handles.coords = [];
-    handles.sup_coords = [];
-end
-if isfield(handles,'IDX')
-    handles.IDX = [];
-    handles.sup_IDX = [];    
-end
-
-guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
 function subject_list_CreateFcn(hObject, eventdata, handles)
