@@ -440,6 +440,9 @@ end
                 feats_k = [];
                 s = obj.current_ADC_pre_processed(:,k); 
                 z = obj.current_ADC_segmented(:,k);
+                %
+                if 1==unique(z), continue, end; % safety - skip "k" if whole k-trail was segmented
+                %
                 % first, one needs to normalize the signal, e.g. by dividing it by the
                 % intensity of its fluctuation level
                 fl = abs(s(~z));
@@ -448,6 +451,7 @@ end
                 s = s/std(fl(:)); % normalize by its std
                 %
                 z_lab = bwlabel(z);
+                %                
                 t =(1:length(z))'/obj.Fs_ADC;
                 for l=1:max(z_lab)
                     s_l = s(z_lab==l);
@@ -465,7 +469,7 @@ end
                     %
                     % this is the place to calculate more features ...
                     %                    
-                    feats_k = [feats_k; [k l length(s_l) t1 t2 p1 p2 p3 p4]];
+                    feats_k = [feats_k; [k l length(s_l) t1 t2 p1 p2 p3 p4]];                    
                 end
                 feats = [feats; feats_k];
             end
