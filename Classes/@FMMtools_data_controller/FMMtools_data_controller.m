@@ -418,7 +418,9 @@ end
                     case {'l' 'L'}
                         type_ind = 4;
                     case {'s' 'S'}
-                        type_ind = 5;                        
+                        type_ind = 5;
+                    otherwise
+                        type_ind = 6; % ehm..
                 end
                 obj.current_annotation(k,1) = type_ind;
             end
