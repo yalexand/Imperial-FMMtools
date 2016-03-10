@@ -486,7 +486,7 @@ end
                     %
                     z_lab = bwlabel(z);
                     %                
-                    t =(1:length(z))'/obj.Fs_ADC;
+                    t =(1:length(z))'/obj.Fs_ADC; % seconds
                     for l=1:max(z_lab)
                         s_l = s(z_lab==l);
                         p1 = wentropy(s_l,'shannon')/length(s_l);
@@ -503,7 +503,7 @@ end
                         %
                         % this is the place to calculate more features ...
                         %                    
-                        feats_k = [feats_k; [k l length(s_l) t1 t2 p1 p2 p3 p4]];
+                        feats_k = [feats_k; [k l t1 t2 length(s_l) p1 p2 p3 p4]];
                         fnames = [fnames; cellstr(obj.current_filename)];
                     end
                     feats = [feats; feats_k];
@@ -512,7 +512,7 @@ end
             end
             %
             % add new features names here
-            feature_names = {'filename','detector_index','trail_index','trail_length', ...
+            feature_names = {'filename','detector_index','trail_index','t1','t2','trail_length', ...
                 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
             %
             trails_features = [fnames num2cell(feats)];            
@@ -619,8 +619,8 @@ end
             [~,record_length] = size(obj.ADC_trails_features_data);
             
             all_data = cell2mat(obj.ADC_trails_features_data(:,7:record_length));
-            t1 = cell2mat(obj.ADC_trails_features_data(:,5));
-            t2 = cell2mat(obj.ADC_trails_features_data(:,6));
+            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
+            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
             
             anno = obj.current_annotation;
             anno_t = obj.current_annotation_time;
