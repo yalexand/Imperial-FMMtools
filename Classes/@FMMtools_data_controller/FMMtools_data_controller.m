@@ -29,7 +29,10 @@ classdef FMMtools_data_controller < handle
     properties(SetObservable = true)
             
         ADC_trails_features_data = []; 
-        ADC_feature_names = [];
+        % feature vector
+        ADC_feature_names = []; 
+        ADC_fv_all = {'trail_length', 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
+        ADC_fv_selected = {'entropy','energy'};
                         
         corr_map_W = 80;
         
@@ -306,7 +309,9 @@ end
                 %
                 settings.ADC_segm_Moving_Average_Window = obj.ADC_segm_Moving_Average_Window;
                 settings.ADC_segm_Threshold = obj.ADC_segm_Threshold;
-                settings.ADC_segm_Minimal_Trail_Duration = obj.ADC_segm_Minimal_Trail_Duration;                                
+                settings.ADC_segm_Minimal_Trail_Duration = obj.ADC_segm_Minimal_Trail_Duration; 
+                %
+                settings.ADC_fv_selected = obj.ADC_fv_selected;
             try
                 xml_write(fname,settings);
             catch
@@ -327,7 +332,10 @@ end
                 %
                 obj.ADC_segm_Moving_Average_Window = settings.ADC_segm_Moving_Average_Window;
                 obj.ADC_segm_Threshold = settings.ADC_segm_Threshold;
-                obj.ADC_segm_Minimal_Trail_Duration = settings.ADC_segm_Minimal_Trail_Duration;                                                
+                obj.ADC_segm_Minimal_Trail_Duration = settings.ADC_segm_Minimal_Trail_Duration;
+                %
+                obj.ADC_fv_selected = settings.ADC_fv_selected;
+                
              end
         end
 %-------------------------------------------------------------------------%
@@ -514,6 +522,7 @@ end
             % add new features names here
             feature_names = {'filename','detector_index','trail_index','t1','t2','trail_length', ...
                 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
+            obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
             %
             trails_features = [fnames num2cell(feats)];            
 
@@ -594,7 +603,7 @@ end
 
             [~,record_length] = size(obj.ADC_trails_features_data);
             
-            data = cell2mat(obj.ADC_trails_features_data(:,7:record_length));
+            data = obj.get_selected_feature_vector_data;
             
             switch type
                 
@@ -615,10 +624,9 @@ end
             IDX = [];
             
             if isempty(obj.ADC_trails_features_data), return, end;
-
-            [~,record_length] = size(obj.ADC_trails_features_data);
+                        
+            fv_data = obj.get_selected_feature_vector_data;
             
-            all_data = cell2mat(obj.ADC_trails_features_data(:,7:record_length));
             t1 = cell2mat(obj.ADC_trails_features_data(:,4));
             t2 = cell2mat(obj.ADC_trails_features_data(:,5));
             
@@ -632,7 +640,7 @@ end
                 for a=1:length(anno_t)
                     if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
                         IDX = [IDX; anno(a)];
-                        data = [data; all_data(k,:)];
+                        data = [data; fv_data(k,:)];
                         break;
                     end
                 end
@@ -644,7 +652,21 @@ end
             coords = stats.canon;
                                     
         end        
-%-------------------------------------------------------------------------%          
+%-------------------------------------------------------------------------% 
+        function data = get_selected_feature_vector_data(obj,~,~)
+            data = [];
+            [~,record_length] = size(obj.ADC_trails_features_data);
+            all_data = cell2mat(obj.ADC_trails_features_data(:,6:record_length)); % 6 is offset
+            assert(size(all_data,2)==numel(obj.ADC_fv_all));
+            for m = 1:numel(obj.ADC_fv_all),            
+                for k = 1:numel(obj.ADC_fv_selected),
+                    if strcmp(char(obj.ADC_fv_all(m)),char(obj.ADC_fv_selected(k)))
+                        data = [data all_data(:,m)];
+                    end                
+                end
+            end
+            
+        end
     end % methods
             
 end

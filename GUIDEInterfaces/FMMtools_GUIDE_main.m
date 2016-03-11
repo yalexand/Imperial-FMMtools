@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 09-Mar-2016 16:00:29
+% Last Modified by GUIDE v2.5 11-Mar-2016 17:14:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -309,8 +309,8 @@ guidata(hObject, handles);
 %
 visualize_current_ADC_trails_features_data(handles);
 %
-set(handles.corrX_chooser,'String',dc.ADC_feature_names(7:length(dc.ADC_feature_names)));
-set(handles.corrY_chooser,'String',dc.ADC_feature_names(7:length(dc.ADC_feature_names)));
+set(handles.corrX_chooser,'String',dc.ADC_feature_names(6:length(dc.ADC_feature_names)));
+set(handles.corrY_chooser,'String',dc.ADC_feature_names(6:length(dc.ADC_feature_names)));
 
 % --- Executes on button press in supervised_classification_go.
 function supervised_classification_go_Callback(hObject, eventdata, handles)
@@ -389,7 +389,6 @@ function unsupervised_clustering_menu_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --------------------------------------------------------------------
 function unsupervised_clustering_set_number_of_clusters_menu_Callback(hObject, eventdata, handles)
 % hObject    handle to unsupervised_clustering_set_number_of_clusters_menu (see GCBO)
@@ -402,7 +401,7 @@ function unsupervised_clustering_go_menu_Callback(hObject, eventdata, handles)
 % hObject    handle to unsupervised_clustering_go_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+unsupervised_clustering_go_Callback(hObject, eventdata, handles);
 
 % --------------------------------------------------------------------
 function supervised_classification_load_training_data_menu_Callback(hObject, eventdata, handles)
@@ -410,20 +409,20 @@ function supervised_classification_load_training_data_menu_Callback(hObject, eve
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --------------------------------------------------------------------
 function supervised_classification_go_menu_Callback(hObject, eventdata, handles)
 % hObject    handle to supervised_classification_go_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+supervised_classification_go_Callback(hObject, eventdata, handles);
 
 
 % --------------------------------------------------------------------
-function feature_extraction_go_on_curernt_menu_Callback(hObject, eventdata, handles)
-% hObject    handle to feature_extraction_go_on_curernt_menu (see GCBO)
+function feature_extraction_go_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to feature_extraction_go_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+feature_extraction_go_Callback(hObject, eventdata, handles);
 
 % --------------------------------------------------------------------
 function preprocessing_go_on_current_menu_Callback(hObject, eventdata, handles)
@@ -686,7 +685,7 @@ function update_record_pane(handles)
                 
         piX = get(handles.corrX_chooser,'Value');
         piY = get(handles.corrY_chooser,'Value');        
-        offset = 7;                    
+        offset = 6;                    
         u1 = cell2mat(dc.ADC_trails_features_data(:,offset+piX-1));
         u2 = cell2mat(dc.ADC_trails_features_data(:,offset+piY-1));
                 
@@ -716,7 +715,10 @@ function visualize_unsupervised_clustering(handles)
     
     v1 = coords(:,1);
     v2 = coords(:,2);
+    try
     v3 = coords(:,3);
+    catch
+    end
     %
     color_1 = [1 0.2 0.4];
     color_2 = [0.34 0.65 0.87];
@@ -731,7 +733,7 @@ function visualize_unsupervised_clustering(handles)
     names = get(handles.unsupervised_clustering_vis_mode,'String');
     unsup_vis_mode = char(names(get(handles.unsupervised_clustering_vis_mode,'Value')));
     %        
-        if      strcmp('3D',unsup_vis_mode)
+        if      strcmp('3D',unsup_vis_mode) && exist('v3','var')
             scatter3(handles.unsupervised_clustering_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
         elseif  strcmp('2D',unsup_vis_mode)
             axes(handles.unsupervised_clustering_pane);
@@ -752,7 +754,10 @@ function visualize_supervised_clustering(handles)
     
     v1 = coords(:,1);
     v2 = coords(:,2);
-    v3 = coords(:,3);
+    try
+        v3 = coords(:,3);
+    catch
+    end
     %
     color_1 = [1 0.2 0.4];
     color_2 = [0.34 0.65 0.87];
@@ -772,7 +777,7 @@ function visualize_supervised_clustering(handles)
     names = get(handles.supervised_clustering_vis_mode,'String');
     sup_vis_mode = char(names(get(handles.supervised_clustering_vis_mode,'Value')));
     %        
-        if      strcmp('3D',sup_vis_mode)
+        if      strcmp('3D',sup_vis_mode) && exist('v3','var')
             scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
         elseif  strcmp('2D',sup_vis_mode)
             axes(handles.supervised_classification_pane);
@@ -961,3 +966,28 @@ function supervised_clustering_vis_mode_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in select_fv_components_pushbutton.
+function select_fv_components_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to select_fv_components_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+dc = handles.data_controller;
+feature_vector_components_chooser(dc);
+
+
+% --------------------------------------------------------------------
+function save_training_data_Callback(hObject, eventdata, handles)
+% hObject    handle to save_training_data (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function select_feature_vector_Callback(hObject, eventdata, handles)
+% hObject    handle to select_feature_vector (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+select_fv_components_pushbutton_Callback(hObject, eventdata, handles)
+
