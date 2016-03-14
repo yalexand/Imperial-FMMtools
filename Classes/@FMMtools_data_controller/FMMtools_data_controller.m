@@ -83,8 +83,11 @@ classdef FMMtools_data_controller < handle
         segmentation_types = {'moving average subtraction + thresholding','...'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Threshold = 0.9; % above noise trail
-        ADC_segm_Minimal_Trail_Duration = 0.5;  %seconds
-                        
+        ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
+        %
+        supervised_learning_types = {'annotator"s + segmentation', ...
+                                            'annotator"s only', ...
+                                            'auto annotated'};                        
     end    
         
     properties(Transient,Hidden)
@@ -400,11 +403,13 @@ end
                     t = quantile(s2(:),obj.ADC_segm_Threshold);
                     %
                     z = s2(s2<t);
-                    t = median(z(:)) + 6*std(z(:));
+                    %
+                    std_factor = 6;
+                    t = median(z(:)) + std_factor*std(z(:));
                     %                                        
                     z = (s2 > t);
                     %
-                    min_size = round(obj.ADC_segm_Minimal_Trail_Duration/4*obj.Fs_ADC); % sic!
+                    min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
                     %
                     SE = strel('line',min_size,90);
                     z = imclose(z,SE);
@@ -618,7 +623,7 @@ end
                         
         end
 %-------------------------------------------------------------------------%  
-        function [coords,IDX] = get_canons_for_supervised_classification_US_anno_training_data(obj,~,~)
+        function [coords,IDX] = get_canons_for_supervised_classification(obj,type,~)
             
             coords = [];
             IDX = [];
@@ -632,24 +637,40 @@ end
             
             anno = obj.current_annotation;
             anno_t = obj.current_annotation_time;
-            
-            % display annotated data in canonic coords
+
             data = [];
             IDX = [];
-            for k = 1:length(t1)
-                for a=1:length(anno_t)
-                    if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
-                        IDX = [IDX; anno(a)];
-                        data = [data; fv_data(k,:)];
-                        break;
+            
+            % display annotated data in canonic coords
+            switch type
+                
+                case 'annotator"s + segmentation'
+
+                    for k = 1:length(t1)
+                        for a=1:length(anno_t)
+                            if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
+                                IDX = [IDX; anno(a)];
+                                data = [data; fv_data(k,:)];
+                                break;
+                            end
+                        end
                     end
-                end
+                
+                case 'annotator"s only'
+                    % to do
+                case 'auto annotated'
+                    % to do
+                    
+                otherwise
+                    
             end
             %
-            [~,score] = pca(data);
-            data = score;
-            [~,~,stats] = manova1(data,IDX);            
-            coords = stats.canon;
+            if ~isempty(IDX)
+                [~,score] = pca(data);
+                data = score;
+                [~,~,stats] = manova1(data,IDX);            
+                coords = stats.canon;
+            end
                                     
         end        
 %-------------------------------------------------------------------------% 

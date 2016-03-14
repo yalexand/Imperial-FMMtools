@@ -57,10 +57,15 @@ handles.data_controller = data_controller;
 
 set(handles.pre_processing_type,'String',data_controller.preprocessing_types);
 set(handles.segmentation_type,'String',data_controller.segmentation_types);
+set(handles.supervised_learning_type,'String',data_controller.supervised_learning_types);
 
 set(handles.supervised_classification_pane, 'xticklabel', [], 'yticklabel', []);
 set(handles.features_pane, 'xticklabel', [], 'yticklabel', []);
 set(handles.unsupervised_clustering_pane, 'xticklabel', [], 'yticklabel', []);
+
+set(handles.vis_original,'Value',true);
+set(handles.vis_pre_processed,'Value',true);
+set(handles.vis_segmented,'Value',true);
 
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
@@ -318,9 +323,12 @@ function supervised_classification_go_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-[sup_coords,sup_IDX] = dc.get_canons_for_supervised_classification_US_anno_training_data;
+    supervised_learning_type_string = get(handles.supervised_learning_type,'String');
+    index = get(handles.supervised_learning_type,'Value');
+[sup_coords,sup_IDX] = dc.get_canons_for_supervised_classification(char(supervised_learning_type_string(index)));
 handles.sup_coords = sup_coords;
-handles.sup_IDX = sup_IDX;
+handles.sup_IDX = sup_IDX;    
+%
 guidata(hObject, handles);
 visualize_supervised_clustering(handles);
 
@@ -521,6 +529,17 @@ function update_record_pane(handles)
         rec = dc.current_data.ADC(:,channel_index);
         prp = dc.current_ADC_pre_processed(:,channel_index);
         
+% not sure how to do it        
+%         prp_log_abs = false; 
+%         if prp_log_abs
+%             avr_window = round(dc.ADC_segm_Moving_Average_Window*dc.Fs_ADC);            
+%             [prp,~] = TD_high_pass_filter( prp, avr_window );                        
+%             prp = log(abs(prp));
+%             vals = prp(~isinf(prp));
+%             minval = min(vals(:));
+%             prp(isinf(prp)) = minval;
+%         end
+                
         %sgm = dc.current_ADC_segmented(:,channel_index)*0.05; %!!!                                
         
         % to display segmented signal..
@@ -560,8 +579,8 @@ function update_record_pane(handles)
     elseif 2==rec_type_index
         
         rec = dc.current_data.IMU(:,channel_index);
-        prp = dc.current_IMU_pre_processed(:,channel_index);                
-        
+        prp = dc.current_IMU_pre_processed(:,channel_index);
+                
         b = [];
         t_b = [];
         g = [];
