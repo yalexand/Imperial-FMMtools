@@ -22,7 +22,7 @@ function varargout = feature_vector_components_chooser(varargin)
 
 % Edit the above text to modify the response to help feature_vector_components_chooser
 
-% Last Modified by GUIDE v2.5 11-Mar-2016 12:33:03
+% Last Modified by GUIDE v2.5 15-Mar-2016 15:24:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -168,3 +168,16 @@ end
 
 fh = ancestor(hObject,'figure');     
 delete(fh);
+
+
+% --- Executes when user attempts to close figure1.
+function figure1_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+dc = handles.data_controller;
+dc.ADC_fv_selected = handles.previous_selection;
+delete(hObject);
+

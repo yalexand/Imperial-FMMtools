@@ -657,7 +657,7 @@ end
                     end
                 
                 case 'annotator"s only'
-                    % to do
+                    % to do 
                 case 'auto annotated'
                     % to do
                     

@@ -994,7 +994,9 @@ function select_fv_components_pushbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
 feature_vector_components_chooser(dc);
-
+% THIS BELOW - DOESN't WORK, NOT CLEAR WHY
+%supervised_classification_go_Callback(hObject, eventdata, handles);
+%unsupervised_clustering_go_Callback(hObject, eventdata, handles);
 
 % --------------------------------------------------------------------
 function save_training_data_Callback(hObject, eventdata, handles)
