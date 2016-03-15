@@ -759,6 +759,7 @@ function visualize_unsupervised_clustering(handles)
             gscatter(v1,v2,IDX_color);
             xlabel(handles.unsupervised_clustering_pane,'C1');
             ylabel(handles.unsupervised_clustering_pane,'C2');
+            legend(handles.unsupervised_clustering_pane,'off');
         end
 %-------------------------------------------------------------------------%        
 function visualize_supervised_clustering(handles)
@@ -803,6 +804,7 @@ function visualize_supervised_clustering(handles)
             gscatter(v1,v2,IDX_color);
             xlabel(handles.supervised_classification_pane,'C1');
             ylabel(handles.supervised_classification_pane,'C2');
+            legend(handles.supervised_classification_pane,'off');            
         end
 
 % --- Executes on selection change in corrX_chooser.

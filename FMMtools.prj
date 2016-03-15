@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="743090830" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="3786985537" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>FMMtools</param.appname>
     <param.icon>${PROJECT_ROOT}\FMMtools_resources\icon.ico</param.icon>
     <param.icons>
