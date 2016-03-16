@@ -1,35 +1,35 @@
-function varargout = feature_vector_components_chooser(varargin)
-% FEATURE_VECTOR_COMPONENTS_CHOOSER MATLAB code for feature_vector_components_chooser.fig
-%      FEATURE_VECTOR_COMPONENTS_CHOOSER, by itself, creates a new FEATURE_VECTOR_COMPONENTS_CHOOSER or raises the existing
+function varargout = groups_chooser(varargin)
+% GROUPS_CHOOSER MATLAB code for groups_chooser.fig
+%      GROUPS_CHOOSER, by itself, creates a new GROUPS_CHOOSER or raises the existing
 %      singleton*.
 %
-%      H = FEATURE_VECTOR_COMPONENTS_CHOOSER returns the handle to a new FEATURE_VECTOR_COMPONENTS_CHOOSER or the handle to
+%      H = GROUPS_CHOOSER returns the handle to a new GROUPS_CHOOSER or the handle to
 %      the existing singleton*.
 %
-%      FEATURE_VECTOR_COMPONENTS_CHOOSER('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in FEATURE_VECTOR_COMPONENTS_CHOOSER.M with the given input arguments.
+%      GROUPS_CHOOSER('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in GROUPS_CHOOSER.M with the given input arguments.
 %
-%      FEATURE_VECTOR_COMPONENTS_CHOOSER('Property','Value',...) creates a new FEATURE_VECTOR_COMPONENTS_CHOOSER or raises the
+%      GROUPS_CHOOSER('Property','Value',...) creates a new GROUPS_CHOOSER or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before feature_vector_components_chooser_OpeningFcn gets called.  An
+%      applied to the GUI before groups_chooser_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to feature_vector_components_chooser_OpeningFcn via varargin.
+%      stop.  All inputs are passed to groups_chooser_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help feature_vector_components_chooser
+% Edit the above text to modify the response to help groups_chooser
 
-% Last Modified by GUIDE v2.5 15-Mar-2016 15:24:58
+% Last Modified by GUIDE v2.5 16-Mar-2016 11:57:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @feature_vector_components_chooser_OpeningFcn, ...
-                   'gui_OutputFcn',  @feature_vector_components_chooser_OutputFcn, ...
+                   'gui_OpeningFcn', @groups_chooser_OpeningFcn, ...
+                   'gui_OutputFcn',  @groups_chooser_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,34 +44,34 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before feature_vector_components_chooser is made visible.
-function feature_vector_components_chooser_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before groups_chooser is made visible.
+function groups_chooser_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to feature_vector_components_chooser (see VARARGIN)
+% varargin   command line arguments to groups_chooser (see VARARGIN)
 
-% Choose default command line output for feature_vector_components_chooser
+% Choose default command line output for groups_chooser
 handles.output = hObject;
 
 dc = varargin{1};
-if isempty(dc.ADC_fv_all), 
-    errordlg('error while loading the list of available features'), 
+if isempty(dc.groups_available), 
+    errordlg('error while loading the list of available groups'), 
     fh = ancestor(hObject,'figure');     
     delete(fh);
     return, 
 end;
 
-set(handles.all_features_list,'String',dc.ADC_fv_all);
-set(handles.all_features_list,'min',1);
-set(handles.all_features_list,'max',length(dc.ADC_fv_all));
+set(handles.all_groups_list,'String',dc.groups_available);
+set(handles.all_groups_list,'min',1);
+set(handles.all_groups_list,'max',length(dc.groups_available));
 
-set(handles.selected_features_list,'String',dc.ADC_fv_selected);
+set(handles.selected_groups_list,'String',dc.groups_selected);
 
 handles.data_controller = dc;
 
-handles.previous_selection = dc.ADC_fv_selected;
+handles.previous_selection = dc.groups_selected;
 
 
 %%%%%%%%%%%%%%
@@ -90,12 +90,12 @@ handles.caller_handles = caller_handles;
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes feature_vector_components_chooser wait for user response (see UIRESUME)
+% UIWAIT makes groups_chooser wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = feature_vector_components_chooser_OutputFcn(hObject, eventdata, handles) 
+function varargout = groups_chooser_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -105,24 +105,24 @@ function varargout = feature_vector_components_chooser_OutputFcn(hObject, eventd
 varargout{1} = handles.output;
 
 
-% --- Executes on selection change in all_features_list.
-function all_features_list_Callback(hObject, eventdata, handles)
-% hObject    handle to all_features_list (see GCBO)
+% --- Executes on selection change in all_groups_list.
+function all_groups_list_Callback(hObject, eventdata, handles)
+% hObject    handle to all_groups_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns all_features_list contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from all_features_list
-handles.selection = get(handles.all_features_list,'Value');
-%disp(get(handles.all_features_list,'Value'));
-str = get(handles.all_features_list,'String');
-set(handles.selected_features_list,'String',str(handles.selection));
+% Hints: contents = cellstr(get(hObject,'String')) returns all_groups_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from all_groups_list
+handles.selection = get(handles.all_groups_list,'Value');
+%disp(get(handles.all_groups_list,'Value'));
+str = get(handles.all_groups_list,'String');
+set(handles.selected_groups_list,'String',str(handles.selection));
 
 guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
-function all_features_list_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to all_features_list (see GCBO)
+function all_groups_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to all_groups_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -140,19 +140,19 @@ function select_pushbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on selection change in selected_features_list.
-function selected_features_list_Callback(hObject, eventdata, handles)
-% hObject    handle to selected_features_list (see GCBO)
+% --- Executes on selection change in selected_groups_list.
+function selected_groups_list_Callback(hObject, eventdata, handles)
+% hObject    handle to selected_groups_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns selected_features_list contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from selected_features_list
+% Hints: contents = cellstr(get(hObject,'String')) returns selected_groups_list contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from selected_groups_list
 
 
 % --- Executes during object creation, after setting all properties.
-function selected_features_list_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to selected_features_list (see GCBO)
+function selected_groups_list_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to selected_groups_list (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -171,19 +171,18 @@ function OK_pushbutton_Callback(hObject, eventdata, handles)
 dc = handles.data_controller;
 
 if isfield(handles,'selection') && numel(handles.selection) < 2
-    errordlg('wrong selection, feature vector won"t change');
+    errordlg('wrong selection, groups won"t change');
 end
 
 if isfield(handles,'selection') && ~ isempty(handles.selection) && numel(handles.selection) >= 2
-    dc.ADC_fv_selected = dc.ADC_fv_all(handles.selection);
+    dc.groups_selected = dc.groups_available(handles.selection);
 else    
-    dc.ADC_fv_selected = handles.previous_selection;
+    dc.groups_selected = handles.previous_selection;
 end
 
 caller_hObject = handles.caller_hObject;
 caller_eventdata = handles.caller_eventdata;
 FMMtools_GUIDE_main('supervised_classification_go_Callback',caller_hObject,caller_eventdata,guidata(caller_hObject));
-FMMtools_GUIDE_main('unsupervised_clustering_go_Callback',caller_hObject,caller_eventdata,guidata(caller_hObject));
 
 fh = ancestor(hObject,'figure');     
 delete(fh);

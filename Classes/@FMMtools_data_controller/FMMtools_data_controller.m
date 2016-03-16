@@ -29,10 +29,14 @@ classdef FMMtools_data_controller < handle
     properties(SetObservable = true)
             
         ADC_trails_features_data = []; 
+        ADC_feature_names = [];
         % feature vector
-        ADC_feature_names = []; 
         ADC_fv_all = {'trail_length', 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
         ADC_fv_selected = {'entropy','energy'};
+        % available "conditions", i.e. types of motion
+        groups_all = {'breathe','general','head','limb','startle','other'};
+        groups_available = {'breathe','general','head','limb','startle','other'};
+        groups_selected = {'breathe','general','startle'};
                         
         corr_map_W = 80;
         
@@ -191,9 +195,15 @@ classdef FMMtools_data_controller < handle
                     subj_elem.omega_ADC = obj.current_omega_ADC;
                     subj_elem.omega_IMU = obj.current_omega_IMU;                    
                     %
-                obj.subj_data = [obj.subj_data; subj_elem];
-                obj.subj_filenames = cellstr(filename); 
-                        
+                    obj.subj_data = [obj.subj_data; subj_elem];
+                    obj.subj_filenames = cellstr(filename);
+                    %
+                    % set up available groups
+                    available_types_ind = unique(obj.current_annotation);
+                    obj.groups_available = cell(1,length(available_types_ind));
+                    for k=1:numel(available_types_ind)
+                        obj.groups_available(k) = obj.groups_all(available_types_ind(k));
+                    end                    
         end
 %-------------------------------------------------------------------------%        
         function res = load_multiple_subjects(obj,prp_type,sgm_type,verbose,~)
@@ -213,6 +223,8 @@ classdef FMMtools_data_controller < handle
         end 
                                             
         obj.subj_data = [];
+        
+        all_annotations = [];
         
         for k = 1:numel(filenames)                                                            
             if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end;
@@ -247,9 +259,18 @@ classdef FMMtools_data_controller < handle
                     subj_elem.omega_ADC = obj.current_omega_ADC;
                     subj_elem.omega_IMU = obj.current_omega_IMU;                    
                     %
-                obj.subj_data = [obj.subj_data; subj_elem];                                
+                obj.subj_data = [obj.subj_data; subj_elem];
+                
+                all_annotations = [all_annotations; obj.current_annotation];
         end
         if ~isempty(hw), delete(hw), drawnow; end;
+                
+                    % set up available groups
+                    available_types_ind = unique(all_annotations);
+                    obj.groups_available = cell(1,length(available_types_ind));
+                    for k=1:numel(available_types_ind)
+                        obj.groups_available(k) = obj.groups_all(available_types_ind(k));
+                    end
                 
         obj.subj_filenames = filenames;
         
@@ -436,11 +457,9 @@ end
             % unfortunately "types" index can be 2 or 3..
             event_type_ind = 3;
             tokens = unique(US_data(:,2)); % check if it is 2
-            if ismember('b',tokens) || ...
-               ismember('g',tokens) || ...
-               ismember('h',tokens) || ...
-               ismember('l',tokens) || ...
-               ismember('s',tokens)
+            %
+            if  ~isempty(intersect(tokens,{'b','g','h','l','s'})) || ...
+                ~isempty(intersect(tokens,{'B','G','H','L','S'}))
                event_type_ind = 2;
             end
             
@@ -469,8 +488,8 @@ end
                 end
                 obj.current_annotation(k,1) = type_ind;
             end
-            % extract annotation
-
+            % extract annotation - ends
+            %            
         end
         
 %-------------------------------------------------------------------------%        
@@ -635,9 +654,6 @@ end
             t1 = cell2mat(obj.ADC_trails_features_data(:,4));
             t2 = cell2mat(obj.ADC_trails_features_data(:,5));
             
-            anno = obj.current_annotation;
-            anno_t = obj.current_annotation_time;
-
             data = [];
             IDX = [];
             
@@ -646,12 +662,16 @@ end
                 
                 case 'annotator"s + segmentation'
 
-                    for k = 1:length(t1)
-                        for a=1:length(anno_t)
-                            if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
-                                IDX = [IDX; anno(a)];
-                                data = [data; fv_data(k,:)];
-                                break;
+                    for subj = 1:numel(obj.subj_data)
+                        anno = obj.subj_data(subj).annotation;
+                        anno_t = obj.subj_data(subj).annotation_time;
+                        for k = 1:length(t1)
+                            for a=1:length(anno_t)
+                                if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
+                                    IDX = [IDX; anno(a)];
+                                    data = [data; fv_data(k,:)];
+                                    break;
+                                end
                             end
                         end
                     end
@@ -664,6 +684,19 @@ end
                 otherwise
                     
             end
+            %
+            % fix the data by retaining only wanted groups - starts
+            data_reducted = [];
+            IDX_reducted = [];
+            for k = 1:numel(IDX)
+                if ~isempty(intersect(obj.groups_all(IDX(k)),obj.groups_selected))
+                    data_reducted = [data_reducted; data(k,:)];
+                    IDX_reducted = [IDX_reducted IDX(k)];
+                end
+            end
+            data = data_reducted;
+            IDX = IDX_reducted;
+            % fix the data by retaining only wanted groups - end
             %
             if ~isempty(IDX)
                 [~,score] = pca(data);

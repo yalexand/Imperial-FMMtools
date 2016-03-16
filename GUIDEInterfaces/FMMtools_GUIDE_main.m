@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 11-Mar-2016 17:14:22
+% Last Modified by GUIDE v2.5 16-Mar-2016 12:38:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -995,10 +995,7 @@ function select_fv_components_pushbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-feature_vector_components_chooser(dc);
-% THIS BELOW - DOESN't WORK, NOT CLEAR WHY
-%supervised_classification_go_Callback(hObject, eventdata, handles);
-%unsupervised_clustering_go_Callback(hObject, eventdata, handles);
+feature_vector_components_chooser(dc,hObject, eventdata, handles);
 
 % --------------------------------------------------------------------
 function save_training_data_Callback(hObject, eventdata, handles)
@@ -1006,11 +1003,21 @@ function save_training_data_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --------------------------------------------------------------------
 function select_feature_vector_Callback(hObject, eventdata, handles)
 % hObject    handle to select_feature_vector (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 select_fv_components_pushbutton_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on button press in select_groups_pushbutton.
+function select_groups_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to select_groups_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+dc = handles.data_controller;
+groups_chooser(dc,hObject, eventdata, handles);
+
+
 
