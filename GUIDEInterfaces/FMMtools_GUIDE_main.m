@@ -470,6 +470,7 @@ if isfield(handles,'IDX')
     handles.sup_IDX = [];    
 end
 
+set(handles.subject_list,'Value',1);
 set(handles.subject_list,'String',dc.current_filename);
 
 guidata(hObject, handles);
