@@ -450,8 +450,9 @@ pre_processing_type_string = get(handles.pre_processing_type,'String');
 segmentation_type_string = get(handles.segmentation_type,'String');
 %
 dc = handles.data_controller;
-dc.load_single_subject(pre_processing_type_string{pre_processing_type_index}, ...
+res = dc.load_single_subject(pre_processing_type_string{pre_processing_type_index}, ...
     segmentation_type_string{segmentation_type_index});
+if ~res, return, end;
 %
 update_record_pane(handles);
 % clear panes

@@ -47,7 +47,7 @@ classdef FMMtools_data_controller < handle
         DefaultDirectory = ['C:' filesep];
         RootDirectory = ['C:' filesep];       
                 
-        current_filename = [];;
+        current_filename = [];
         
         current_data = [];
         
@@ -407,7 +407,8 @@ end
             if isempty(obj.current_ADC_pre_processed), return, end;
 
             obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));
-                                             
+                               
+%debug_h = figure();
             num_ADC_channels = size(obj.current_data.ADC,2);
             hw = waitbar(0,[type ' segmenting ADC - please wait']);
             for k = 1 : num_ADC_channels
@@ -420,7 +421,7 @@ end
                     [s,~] = TD_high_pass_filter( s, avr_window );
                     %                    
                     s2 = s.*s;
-                    %                    
+                    %  
                     t = quantile(s2(:),obj.ADC_segm_Threshold);
                     %
                     z = s2(s2<t);
@@ -428,7 +429,8 @@ end
                     std_factor = 6;
                     t = median(z(:)) + std_factor*std(z(:));
                     %                                        
-                    z = (s2 > t);
+                    z = (s2 > t);                    
+%figure(debug_h);subplot(2,4,k);hist(log(sqrt(s2)),400);grid on;xlabel(num2str(log(sqrt(t))));
                     %
                     min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
                     %

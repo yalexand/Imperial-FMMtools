@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="3786985537" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="1081349828" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>FMMtools</param.appname>
     <param.icon>${PROJECT_ROOT}\FMMtools_resources\icon.ico</param.icon>
     <param.icons>
@@ -77,6 +77,8 @@
       <file>${PROJECT_ROOT}\GUIDEInterfaces\feature_vector_components_chooser.m</file>
       <file>${PROJECT_ROOT}\GUIDEInterfaces\FMMtools_GUIDE_main.fig</file>
       <file>${PROJECT_ROOT}\GUIDEInterfaces\FMMtools_GUIDE_main.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\groups_chooser.fig</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\groups_chooser.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\args2struct.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\assign_handles.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\correlation_map.m</file>
