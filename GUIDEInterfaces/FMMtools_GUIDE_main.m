@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 16-Mar-2016 12:38:12
+% Last Modified by GUIDE v2.5 17-Mar-2016 16:43:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,10 +62,15 @@ set(handles.supervised_learning_type,'String',data_controller.supervised_learnin
 set(handles.supervised_classification_pane, 'xticklabel', [], 'yticklabel', []);
 set(handles.features_pane, 'xticklabel', [], 'yticklabel', []);
 set(handles.unsupervised_clustering_pane, 'xticklabel', [], 'yticklabel', []);
+set(handles.pairwise_group_comparison_axes, 'xticklabel', [], 'yticklabel', []);
 
 set(handles.vis_original,'Value',true);
 set(handles.vis_pre_processed,'Value',true);
 set(handles.vis_segmented,'Value',true);
+
+set(handles.pairwise_group_comparison_feature,'String',data_controller.ADC_fv_selected);
+set(handles.pairwise_group_comparison_item1,'String',data_controller.groups_selected);
+set(handles.pairwise_group_comparison_item2,'String',data_controller.groups_selected);
 
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
@@ -1023,3 +1028,161 @@ groups_chooser(dc,hObject, eventdata, handles);
 
 
 
+
+
+% --- Executes on selection change in pairwise_group_comparison_feature.
+function pairwise_group_comparison_feature_Callback(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_feature (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns pairwise_group_comparison_feature contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from pairwise_group_comparison_feature
+pairwise_group_comparison_go_Callback(hObject, eventdata, handles);
+
+% --- Executes during object creation, after setting all properties.
+function pairwise_group_comparison_feature_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_feature (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pairwise_group_comparison_go.
+function pairwise_group_comparison_go_Callback(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_go (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+dc = handles.data_controller;
+type = 'annotator"s + segmentation'; % FOR NOW..
+%
+str = get(handles.pairwise_group_comparison_feature,'String');
+feature_vector_name = str(get(handles.pairwise_group_comparison_feature,'Value'));
+%
+str = get(handles.pairwise_group_comparison_item1,'String');
+group1 = str(get(handles.pairwise_group_comparison_item1,'Value'));
+%
+str = get(handles.pairwise_group_comparison_item2,'String');
+group2 = str(get(handles.pairwise_group_comparison_item2,'Value'));
+%
+[X1,Y1,X2,Y2,z] = dc.get_pairwise_comparison(feature_vector_name,group1,group2,type);
+g1_plot_mode = 'c.-';
+g2_plot_mode = 'm.-';
+plot(handles.pairwise_group_comparison_axes,X1,Y1,g1_plot_mode,X2,Y2,g2_plot_mode);
+grid(handles.pairwise_group_comparison_axes,'on');
+
+set(handles.pairwise_comparison_stats,'String', ...
+{['N1 = ', num2str(z.N1)], ...
+['N2 = ', num2str(z.N2)], ...
+['m1 = ', num2str(z.m1)], ...
+['m2 = ', num2str(z.m2)], ...
+['std1 = ', num2str(z.std1)], ...
+['std2 = ', num2str(z.std2)], ...
+['d = ', num2str(z.d)], ...
+['AUC = ', num2str(z.AUC)], ...
+['p95_KS = ', num2str(z.p_ks)], ...
+['p95_rnk = ', num2str(z.p_rnk)]});
+% legend(handles.pairwise_comparison_stats,[group1, group2]); % doesn't work (?)
+
+% --- Executes on selection change in pairwise_group_comparison_item1.
+function pairwise_group_comparison_item1_Callback(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_item1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns pairwise_group_comparison_item1 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from pairwise_group_comparison_item1
+pairwise_group_comparison_go_Callback(hObject, eventdata, handles);
+
+% --- Executes during object creation, after setting all properties.
+function pairwise_group_comparison_item1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_item1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in pairwise_group_comparison_item2.
+function pairwise_group_comparison_item2_Callback(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_item2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns pairwise_group_comparison_item2 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from pairwise_group_comparison_item2
+pairwise_group_comparison_go_Callback(hObject, eventdata, handles);
+
+% --- Executes during object creation, after setting all properties.
+function pairwise_group_comparison_item2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pairwise_group_comparison_item2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in supervised_classification_type.
+function supervised_classification_type_Callback(hObject, eventdata, handles)
+% hObject    handle to supervised_classification_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns supervised_classification_type contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from supervised_classification_type
+
+
+% --- Executes during object creation, after setting all properties.
+function supervised_classification_type_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to supervised_classification_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in confusion_matrix_go_pushbutton.
+function confusion_matrix_go_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to confusion_matrix_go_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on selection change in pairwise_comparison_stats.
+function pairwise_comparison_stats_Callback(hObject, eventdata, handles)
+% hObject    handle to pairwise_comparison_stats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns pairwise_comparison_stats contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from pairwise_comparison_stats
+
+
+% --- Executes during object creation, after setting all properties.
+function pairwise_comparison_stats_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pairwise_comparison_stats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

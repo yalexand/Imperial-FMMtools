@@ -151,7 +151,9 @@ classdef FMMtools_data_controller < handle
                         
          end
 %-------------------------------------------------------------------------%        
-        function load_single_subject(obj,prp_type,sgm_type,~)
+        function res = load_single_subject(obj,prp_type,sgm_type,~)
+            
+            res = false;
                         
             [filename,pathname] = uigetfile({'*.mat','Subject Records Files'},'Select data file',obj.DefaultDirectory);
             if filename == 0, return, end;       
@@ -203,7 +205,9 @@ classdef FMMtools_data_controller < handle
                     obj.groups_available = cell(1,length(available_types_ind));
                     for k=1:numel(available_types_ind)
                         obj.groups_available(k) = obj.groups_all(available_types_ind(k));
-                    end                    
+                    end 
+                    
+                    res = true;
         end
 %-------------------------------------------------------------------------%        
         function res = load_multiple_subjects(obj,prp_type,sgm_type,verbose,~)
@@ -276,6 +280,7 @@ classdef FMMtools_data_controller < handle
         
         obj.DefaultDirectory = pathname;
         obj.ADC_trails_features_data = [];
+        
         res = true;
 
         end     
@@ -650,33 +655,14 @@ end
             IDX = [];
             
             if isempty(obj.ADC_trails_features_data), return, end;
-                        
-            fv_data = obj.get_selected_feature_vector_data;
-            
-            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
-            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
-            
-            data = [];
-            IDX = [];
-            
+                                    
             % display annotated data in canonic coords
             switch type
                 
                 case 'annotator"s + segmentation'
 
-                    for subj = 1:numel(obj.subj_data)
-                        anno = obj.subj_data(subj).annotation;
-                        anno_t = obj.subj_data(subj).annotation_time;
-                        for k = 1:length(t1)
-                            for a=1:length(anno_t)
-                                if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
-                                    IDX = [IDX; anno(a)];
-                                    data = [data; fv_data(k,:)];
-                                    break;
-                                end
-                            end
-                        end
-                    end
+                % data composed with selected featue vector but NOT filtered re selected groups    
+                [data,IDX] = obj.get_annotators_categorized_data;
                 
                 case 'annotator"s only'
                     % to do 
@@ -723,6 +709,123 @@ end
             end
             
         end
-    end % methods
+%-------------------------------------------------------------------------% 
+        function [X1,Y1,X2,Y2,z] = get_pairwise_comparison(obj,feature_vector_name,group1,group2,type,~)
+            X1 = [];
+            Y1 = [];
+            X2 = [];
+            Y2 = [];
             
+            z = [];
+            
+            if isempty(obj.ADC_trails_features_data), return, end;
+                                    
+            % display annotated data in canonic coords
+            switch type
+                
+                case 'annotator"s + segmentation'
+
+                % data composed with selected featue vector but NOT filtered re selected groups    
+                [data,IDX] = obj.get_annotators_categorized_data;
+                
+                case 'annotator"s only'
+                    % to do 
+                case 'auto annotated'
+                    % to do
+                    
+                otherwise
+                    
+            end
+
+            %compile 2 corresponding satistical samples and evaluate them
+            x1 = [];
+            x2 = [];
+            %
+            fv_index = find(0~=strcmp(obj.ADC_fv_selected,feature_vector_name));
+            %
+            for k = 1:numel(IDX)
+                if strcmp(obj.groups_all(IDX(k)),group1)
+                    x1 = [x1; data(k,fv_index)];
+                elseif strcmp(obj.groups_all(IDX(k)),group2)
+                    x2 = [x2; data(k,fv_index)];
+                end
+            end
+            
+            %%%%%%%%%%%
+            % Cohen's d
+            N1 = numel(x1);
+            N2 = numel(x2);
+            m1 = mean(x1);
+            m2 = mean(x2);
+            std1 = std(x1);
+            std2 = std(x2);
+            
+            s = sqrt( 1/(N1+N2)*( (N1-1)*var(x1) + (N2-1)*var(x2) ) );
+            z.d = abs( m1 - m2 )/s;
+
+            % AUC
+            [SEN, SPEC, TH, ACC, AUC,Yi,idx]=roc1(x1,x2);
+            %plot(1-SPEC,SEN);
+
+            if AUC < 0.5 AUC = 1-AUC; end;		
+
+            z.AUC = AUC;
+%%%%%%%%%%%% should be controlled
+nbins = 50;            
+a_ks = 0.01;
+a_ranksum = 0.01;
+%%%%%%%%%%%%
+            
+            %KS
+            [h_ks,p_ks,ks2stat] = kstest2(x1,x2,a_ks);
+            [p_rnk,h_rnk] = ranksum(x1,x2, a_ranksum);
+
+            z.h_ks = h_ks;
+            z.p_ks = p_ks;
+            z.h_rnk = h_rnk;
+            z.p_rnk = p_rnk;            
+            z.N1=N1;
+            z.N2=N2;
+            z.m1=m1;
+            z.m2=m2;
+            z.std1=std1;
+            z.std2=std2;
+            %
+
+            %            
+            [ min1, max1, X1, Y1 ] = histodata(x1,nbins);
+            [ min2, max2, X2, Y2 ] = histodata(x2,nbins);
+            %
+            range = max([ max1 max2 ]) - min( [min1 min2 ]);
+            %
+            c1 = (max1-min1)/range;
+            c2 = (max2-min2)/range;
+            Y1=Y1/c1;
+            Y2=Y2/c2;
+                           
+        end
+%-------------------------------------------------------------------------%         
+        function [data,IDX] = get_annotators_categorized_data(obj,~,~)
+            % data composed with selected featue vector but NOT filtered re selected groups    
+            fv_data = obj.get_selected_feature_vector_data;            
+            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
+            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
+            data = [];
+            IDX = [];        
+                   for subj = 1:numel(obj.subj_data)
+                        anno = obj.subj_data(subj).annotation;
+                        anno_t = obj.subj_data(subj).annotation_time;
+                        for k = 1:length(t1)
+                            for a=1:length(anno_t)
+                                if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
+                                    IDX = [IDX; anno(a)];
+                                    data = [data; fv_data(k,:)];
+                                    break;
+                                end
+                            end
+                        end
+                   end        
+        end
+%-------------------------------------------------------------------------%         
+    end % methods            
 end
