@@ -183,6 +183,7 @@ end
 caller_hObject = handles.caller_hObject;
 caller_eventdata = handles.caller_eventdata;
 FMMtools_GUIDE_main('supervised_classification_go_Callback',caller_hObject,caller_eventdata,guidata(caller_hObject));
+FMMtools_GUIDE_main('setup_available_group_items',guidata(caller_hObject));
 
 fh = ancestor(hObject,'figure');     
 delete(fh);

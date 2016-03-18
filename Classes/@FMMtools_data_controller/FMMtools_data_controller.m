@@ -718,6 +718,8 @@ end
             
             z = [];
             
+            if strcmp(group1,group2), return, end;
+            
             if isempty(obj.ADC_trails_features_data), return, end;
                                     
             % display annotated data in canonic coords

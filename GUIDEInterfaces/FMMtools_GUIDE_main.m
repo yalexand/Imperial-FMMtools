@@ -68,7 +68,7 @@ set(handles.vis_original,'Value',true);
 set(handles.vis_pre_processed,'Value',true);
 set(handles.vis_segmented,'Value',true);
 
-set(handles.pairwise_group_comparison_feature,'String',data_controller.ADC_fv_selected);
+set(handles.pairwise_group_comparison_feature,'String',data_controller.ADC_fv_all);
 set(handles.pairwise_group_comparison_item1,'String',data_controller.groups_selected);
 set(handles.pairwise_group_comparison_item2,'String',data_controller.groups_selected);
 
@@ -464,6 +464,7 @@ update_record_pane(handles);
 cla(handles.supervised_classification_pane,'reset');
 cla(handles.features_pane,'reset');
 cla(handles.unsupervised_clustering_pane,'reset');
+clear_pairwise_comparison_visuals(handles);
 %
 set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
 %
@@ -478,6 +479,8 @@ end
 
 set(handles.subject_list,'Value',1);
 set(handles.subject_list,'String',dc.current_filename);
+
+setup_available_group_items(handles);
 
 guidata(hObject, handles);
 
@@ -813,6 +816,28 @@ function visualize_supervised_clustering(handles)
             ylabel(handles.supervised_classification_pane,'C2');
             legend(handles.supervised_classification_pane,'off');            
         end
+%-------------------------------------------------------------------------%  
+function setup_available_group_items(handles)
+    dc = handles.data_controller;
+    set(handles.pairwise_group_comparison_item1,'String',dc.groups_available);
+    set(handles.pairwise_group_comparison_item2,'String',dc.groups_available); 
+%-------------------------------------------------------------------------%      
+    function clear_pairwise_comparison_visuals(handles)               
+    cla(handles.pairwise_group_comparison_axes,'reset');
+    grid(handles.pairwise_group_comparison_axes,'on');    
+    set(handles.pairwise_comparison_stats,'String', ...
+    {'N1 = ', ...
+    'N2 = ', ...
+    'm1 = ', ...
+    'm2 = ', ...
+    'std1 = ', ...
+    'std2 = ', ...
+    'd = ', ...
+    'AUC = ', ...
+    'p95_KS = ', ...
+    'p95_rnk = '});
+
+
 
 % --- Executes on selection change in corrX_chooser.
 function corrX_chooser_Callback(hObject, eventdata, handles)
@@ -925,7 +950,9 @@ update_record_pane(handles);
 % clear panes
 cla(handles.supervised_classification_pane,'reset');
 cla(handles.features_pane,'reset');
-cla(handles.unsupervised_clustering_pane,'reset');
+clear_pairwise_comparison_visuals(handles);
+%
+
 %
 set(handles.figure1,'Name',['FMMtools : ' num2str(dc.current_filename)]);
 %
@@ -939,6 +966,8 @@ if isfield(handles,'IDX')
 end
 
 set(handles.subject_list,'String',dc.subj_filenames);
+
+setup_available_group_items(handles);
 
 guidata(hObject, handles);
 
@@ -1071,6 +1100,8 @@ str = get(handles.pairwise_group_comparison_item2,'String');
 group2 = str(get(handles.pairwise_group_comparison_item2,'Value'));
 %
 [X1,Y1,X2,Y2,z] = dc.get_pairwise_comparison(feature_vector_name,group1,group2,type);
+if isempty(z), clear_pairwise_comparison_visuals(handles), return, end;
+
 g1_plot_mode = 'c.-';
 g2_plot_mode = 'm.-';
 plot(handles.pairwise_group_comparison_axes,X1,Y1,g1_plot_mode,X2,Y2,g2_plot_mode);
@@ -1185,4 +1216,5 @@ function pairwise_comparison_stats_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+                
 end
