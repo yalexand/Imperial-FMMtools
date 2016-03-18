@@ -773,7 +773,7 @@ function visualize_unsupervised_clustering(handles)
         end
 %-------------------------------------------------------------------------%        
 function visualize_supervised_clustering(handles)
-
+        
     try
         coords = handles.sup_coords;
         IDX = handles.sup_IDX;
@@ -814,8 +814,17 @@ function visualize_supervised_clustering(handles)
             gscatter(v1,v2,IDX_color);
             xlabel(handles.supervised_classification_pane,'C1');
             ylabel(handles.supervised_classification_pane,'C2');
-            legend(handles.supervised_classification_pane,'off');            
+            %legend(handles.supervised_classification_pane,'off');            
         end
+        % fix legends
+        dc = handles.data_controller;
+        group_indices = unique(IDX);
+        LEGENDS = [];
+        for k=1:numel(group_indices)
+            LEGENDS = [LEGENDS dc.groups_all(group_indices(k))];
+        end
+        legend(handles.supervised_classification_pane,LEGENDS);
+                        
 %-------------------------------------------------------------------------%  
 function setup_available_group_items(handles)
     dc = handles.data_controller;

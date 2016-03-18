@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="1081349828" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="2265219883" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>FMMtools</param.appname>
     <param.icon>${PROJECT_ROOT}\FMMtools_resources\icon.ico</param.icon>
     <param.icons>
@@ -82,8 +82,10 @@
       <file>${PROJECT_ROOT}\HelperFunctions\args2struct.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\assign_handles.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\correlation_map.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\histodata.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\map.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\PSD.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\roc1.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\sort_nat.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\TD_high_pass_filter.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xml_read.m</file>
