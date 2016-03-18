@@ -662,7 +662,7 @@ end
                 case 'annotator"s + segmentation'
 
                 % data composed with selected featue vector but NOT filtered re selected groups    
-                [data,IDX] = obj.get_annotators_categorized_data;
+                [data,IDX] = obj.get_annotators_categorized_data('selected components');
                 
                 case 'annotator"s only'
                     % to do 
@@ -728,7 +728,7 @@ end
                 case 'annotator"s + segmentation'
 
                 % data composed with selected featue vector but NOT filtered re selected groups    
-                [data,IDX] = obj.get_annotators_categorized_data;
+                [data,IDX] = obj.get_annotators_categorized_data('all components');
                 
                 case 'annotator"s only'
                     % to do 
@@ -743,7 +743,7 @@ end
             x1 = [];
             x2 = [];
             %
-            fv_index = find(0~=strcmp(obj.ADC_fv_selected,feature_vector_name));
+            fv_index = find(0~=strcmp(obj.ADC_fv_all,feature_vector_name));
             %
             for k = 1:numel(IDX)
                 if strcmp(obj.groups_all(IDX(k)),group1)
@@ -807,9 +807,17 @@ a_ranksum = 0.01;
                            
         end
 %-------------------------------------------------------------------------%         
-        function [data,IDX] = get_annotators_categorized_data(obj,~,~)
+        function [data,IDX] = get_annotators_categorized_data(obj,mode,~)
             % data composed with selected featue vector but NOT filtered re selected groups    
-            fv_data = obj.get_selected_feature_vector_data;            
+            switch mode
+                case 'selected components'
+                    fv_data = obj.get_selected_feature_vector_data;            
+                case 'all components'
+                    fv_temp = obj.ADC_fv_selected;
+                    obj.ADC_fv_selected = obj.ADC_fv_all;
+                    fv_data = obj.get_selected_feature_vector_data;
+                    obj.ADC_fv_selected = fv_temp;
+            end
             t1 = cell2mat(obj.ADC_trails_features_data(:,4));
             t2 = cell2mat(obj.ADC_trails_features_data(:,5));
             data = [];
