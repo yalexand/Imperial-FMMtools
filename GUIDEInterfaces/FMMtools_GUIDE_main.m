@@ -959,6 +959,7 @@ update_record_pane(handles);
 % clear panes
 cla(handles.supervised_classification_pane,'reset');
 cla(handles.features_pane,'reset');
+cla(handles.unsupervised_clustering_pane,'reset');
 clear_pairwise_comparison_visuals(handles);
 %
 
