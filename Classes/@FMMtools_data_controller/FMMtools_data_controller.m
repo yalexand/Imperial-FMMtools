@@ -86,14 +86,22 @@ classdef FMMtools_data_controller < handle
         %
         segmentation_types = {'moving average subtraction + thresholding','...'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
-        ADC_segm_Threshold = 0.9; % above noise trail
         ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
         %
         supervised_learning_types = {'annotator"s + segmentation', ...
                                             'annotator"s only', ...
                                             'auto annotated'};
         %
-        exclude_IMU = false;
+        exclude_IMU = true;
+        
+        IMU_sgm_low_signal_quantile = 0.1;
+        IMU_sgm_signal_cutoff = 0.05; % weaker signals rejected
+        IMU_sgm_SN = 200; % signal-to-noise
+        %
+        ADC_sgm_low_signal_quantile = 0.1;
+        ADC_sgm_signal_cutoff = 0.004; % weaker signals rejected
+        ADC_sgm_SN = 100; % signal-to-noise
+                        
     end    
         
     properties(Transient,Hidden)
@@ -345,11 +353,18 @@ end
                 settings.ADC_prprss_notch_comb_bw = obj.ADC_prprss_notch_comb_bw;
                 %
                 settings.ADC_segm_Moving_Average_Window = obj.ADC_segm_Moving_Average_Window;
-                settings.ADC_segm_Threshold = obj.ADC_segm_Threshold;
                 settings.ADC_segm_Minimal_Trail_Duration = obj.ADC_segm_Minimal_Trail_Duration; 
                 %
                 settings.ADC_fv_selected = obj.ADC_fv_selected;
                 settings.exclude_IMU = obj.exclude_IMU;
+                %
+                settings.IMU_sgm_low_signal_quantile = obj.IMU_sgm_low_signal_quantile;
+                settings.IMU_sgm_signal_cutoff = obj.IMU_sgm_signal_cutoff;
+                settings.IMU_sgm_SN = obj.IMU_sgm_SN;
+                %
+                settings.ADC_sgm_low_signal_quantile = obj.ADC_sgm_low_signal_quantile;
+                settings.ADC_sgm_signal_cutoff = obj.ADC_sgm_signal_cutoff;
+                settings.ADC_sgm_SN = obj.ADC_sgm_SN;                
             try
                 xml_write(fname,settings);
             catch
@@ -369,11 +384,18 @@ end
                 obj.ADC_prprss_notch_comb_bw = settings.ADC_prprss_notch_comb_bw;
                 %
                 obj.ADC_segm_Moving_Average_Window = settings.ADC_segm_Moving_Average_Window;
-                obj.ADC_segm_Threshold = settings.ADC_segm_Threshold;
                 obj.ADC_segm_Minimal_Trail_Duration = settings.ADC_segm_Minimal_Trail_Duration;
                 %
                 obj.ADC_fv_selected = settings.ADC_fv_selected;
                 obj.exclude_IMU = settings.exclude_IMU;                
+                %
+                obj.IMU_sgm_low_signal_quantile = settings.IMU_sgm_low_signal_quantile;
+                obj.IMU_sgm_signal_cutoff = settings.IMU_sgm_signal_cutoff;
+                obj.IMU_sgm_SN = settings.IMU_sgm_SN;
+                %
+                obj.ADC_sgm_low_signal_quantile = settings.ADC_sgm_low_signal_quantile;
+                obj.ADC_sgm_signal_cutoff = settings.ADC_sgm_signal_cutoff;
+                obj.ADC_sgm_SN = settings.ADC_sgm_SN;                                
              end
         end
 %-------------------------------------------------------------------------%
@@ -436,15 +458,12 @@ end
                     %                    
                     s_ = sqrt(s.*s);
                     %                      
-%PARAMETER (obj.ADC_segm_Threshold)                    
-                    t = quantile(s_(:),0.1); %  take low 10% of signal
+                    t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); %  take low 10% of signal
                     z = s_(s_<t);
                     %
-%PARAMETER                                        
-                    SN_factor = 100;
-                    t = SN_factor*mean(z(:)); % threshold at 100X average noise level
-%PARAMETER                                                            
-                    if t < 4e-3, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
+                    t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
+                    %
+                    if t < obj.ADC_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
                     %
                     z = (s_ > t);
                     %                    
@@ -607,17 +626,14 @@ end
 %                     T = find(N==max(N(:)));                    
 %                     t = min(s_(:)) + 100*( X(min(T(:))) - min(s_(:)) );
 %                     %                                        
-%                     z = (s_ > t);                    
-
-%PARAMETER 
-                    t = quantile(s_(:),0.1); %  take low 10% of signal
+%                     z = (s_ > t);        
+                    %
+                    t = quantile(s_(:),obj.IMU_sgm_low_signal_quantile); %  take low 10% of signal
                     z = s_(s_<t);
                     %
-%PARAMETER                                        
-                    SN_factor = 200;
-                    t = SN_factor*mean(z(:)); % threshold at 100X average noise level
-%PARAMETER                                                            
-                    if t < 0.05, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
+                    t = obj.IMU_sgm_SN*mean(z(:)); % threshold at 200X (or whatever) average noise level
+                    %
+                    if t < obj.IMU_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
                     %
                     z = (s_ > t);
                     %                    

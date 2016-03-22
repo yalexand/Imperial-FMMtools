@@ -72,7 +72,7 @@ set(handles.pairwise_group_comparison_feature,'String',data_controller.ADC_fv_al
 set(handles.pairwise_group_comparison_item1,'String',data_controller.groups_selected);
 set(handles.pairwise_group_comparison_item2,'String',data_controller.groups_selected);
 
-set(handles.exclude_strong_IMU_checkbox,'Value',true);
+set(handles.exclude_strong_IMU_checkbox,'Value',data_controller.exclude_IMU);
 
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
@@ -1247,4 +1247,3 @@ function exclude_strong_IMU_checkbox_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of exclude_strong_IMU_checkbox
 dc = handles.data_controller;
 dc.exclude_IMU = get(handles.exclude_strong_IMU_checkbox,'Value');
-disp(dc.exclude_IMU);
