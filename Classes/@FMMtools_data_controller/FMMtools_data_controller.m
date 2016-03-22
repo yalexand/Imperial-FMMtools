@@ -101,6 +101,8 @@ classdef FMMtools_data_controller < handle
         ADC_sgm_low_signal_quantile = 0.1;
         ADC_sgm_signal_cutoff = 0.004; % weaker signals rejected
         ADC_sgm_SN = 100; % signal-to-noise
+        %
+        annotators_delay = 0.4; % seconds
                         
     end    
         
@@ -642,7 +644,7 @@ end
                     min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_IMU); % sic!
                     %
                     SE = strel('line',min_size,90);
-                    z = imclose(z,SE);
+                    z = imdilate(z,SE); % to expand exclusion area a bit.. 
                     z = bwareaopen(z,min_size);
                     obj.current_IMU_segmented(:,k) = z;
                     %
@@ -896,7 +898,10 @@ a_ranksum = 0.01;
             IDX = [];        
                    for subj = 1:numel(obj.subj_data)
                         anno = obj.subj_data(subj).annotation;
-                        anno_t = obj.subj_data(subj).annotation_time;
+                        anno_t = obj.subj_data(subj).annotation_time;                        
+                        %
+                        anno_t = anno_t - obj.annotators_delay; % correct for finite human reaction time
+                        %
                         for k = 1:length(t1)
                             for a=1:length(anno_t)
                                 if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         

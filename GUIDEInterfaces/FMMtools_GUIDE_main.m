@@ -74,6 +74,10 @@ set(handles.pairwise_group_comparison_item2,'String',data_controller.groups_sele
 
 set(handles.exclude_strong_IMU_checkbox,'Value',data_controller.exclude_IMU);
 
+set(handles.confusion_matrix, 'Data', eye(6));
+set(handles.confusion_matrix, 'RowName', data_controller.groups_all);
+set(handles.confusion_matrix, 'ColumnName', data_controller.groups_all);
+
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
 
@@ -838,6 +842,10 @@ function setup_available_group_items(handles)
     dc = handles.data_controller;
     set(handles.pairwise_group_comparison_item1,'String',dc.groups_available);
     set(handles.pairwise_group_comparison_item2,'String',dc.groups_available); 
+    
+    set(handles.confusion_matrix, 'Data', eye(numel(dc.groups_selected)));
+    set(handles.confusion_matrix, 'RowName', dc.groups_selected);
+    set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);
 %-------------------------------------------------------------------------%      
     function clear_pairwise_comparison_visuals(handles)               
     cla(handles.pairwise_group_comparison_axes,'reset');
