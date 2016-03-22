@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 17-Mar-2016 16:43:44
+% Last Modified by GUIDE v2.5 21-Mar-2016 14:17:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -71,6 +71,8 @@ set(handles.vis_segmented,'Value',true);
 set(handles.pairwise_group_comparison_feature,'String',data_controller.ADC_fv_all);
 set(handles.pairwise_group_comparison_item1,'String',data_controller.groups_selected);
 set(handles.pairwise_group_comparison_item2,'String',data_controller.groups_selected);
+
+set(handles.exclude_strong_IMU_checkbox,'Value',true);
 
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
@@ -602,7 +604,13 @@ function update_record_pane(handles)
         s = [];
         t_s = [];
                 
-        sgm = zeros(size(rec));
+        sgm = dc.current_IMU_segmented(:,channel_index);
+        % to display segmented signal..
+        t = quantile(prp,0.1) ;
+        z = prp(prp>t);
+        base = median(z(:));
+        cap = 3*std(z(:));
+        sgm = ones(length(sgm),1)*base + sgm*cap;             
     end
                              
     if 1==plot_type_index
@@ -1228,3 +1236,15 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
                 
 end
+
+
+% --- Executes on button press in exclude_strong_IMU_checkbox.
+function exclude_strong_IMU_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to exclude_strong_IMU_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of exclude_strong_IMU_checkbox
+dc = handles.data_controller;
+dc.exclude_IMU = get(handles.exclude_strong_IMU_checkbox,'Value');
+disp(dc.exclude_IMU);

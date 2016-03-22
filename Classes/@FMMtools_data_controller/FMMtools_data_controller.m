@@ -91,7 +91,9 @@ classdef FMMtools_data_controller < handle
         %
         supervised_learning_types = {'annotator"s + segmentation', ...
                                             'annotator"s only', ...
-                                            'auto annotated'};                        
+                                            'auto annotated'};
+        %
+        exclude_IMU = false;
     end    
         
     properties(Transient,Hidden)
@@ -174,6 +176,9 @@ classdef FMMtools_data_controller < handle
             obj.segment_IMU([]);
             obj.calculate_PSDs;
             %
+            obj.possibly_exclude_ADC_findings_with_simultaneous_IMU_response;
+            %                            
+            %
             % fill 1-st element in data struct
                     subj_elem.filename = obj.current_filename;                                
                     subj_elem.data = obj.current_data;
@@ -239,7 +244,10 @@ classdef FMMtools_data_controller < handle
                 obj.segment_ADC(sgm_type);
                 obj.pre_process_IMU([]); 
                 obj.segment_IMU([]);
-                obj.calculate_PSDs;                            
+                obj.calculate_PSDs;                                            
+                %
+                obj.possibly_exclude_ADC_findings_with_simultaneous_IMU_response;
+                %                
                     %
                     subj_elem.filename = obj.current_filename;                                
                     subj_elem.data = obj.current_data;
@@ -341,6 +349,7 @@ end
                 settings.ADC_segm_Minimal_Trail_Duration = obj.ADC_segm_Minimal_Trail_Duration; 
                 %
                 settings.ADC_fv_selected = obj.ADC_fv_selected;
+                settings.exclude_IMU = obj.exclude_IMU;
             try
                 xml_write(fname,settings);
             catch
@@ -364,7 +373,7 @@ end
                 obj.ADC_segm_Minimal_Trail_Duration = settings.ADC_segm_Minimal_Trail_Duration;
                 %
                 obj.ADC_fv_selected = settings.ADC_fv_selected;
-                
+                obj.exclude_IMU = settings.exclude_IMU;                
              end
         end
 %-------------------------------------------------------------------------%
@@ -425,17 +434,22 @@ end
                     %
                     [s,~] = TD_high_pass_filter( s, avr_window );
                     %                    
-                    s2 = s.*s;
-                    %  
-                    t = quantile(s2(:),obj.ADC_segm_Threshold);
+                    s_ = sqrt(s.*s);
+                    %                      
+%PARAMETER (obj.ADC_segm_Threshold)                    
+                    t = quantile(s_(:),0.1); %  take low 10% of signal
+                    z = s_(s_<t);
                     %
-                    z = s2(s2<t);
+%PARAMETER                                        
+                    SN_factor = 100;
+                    t = SN_factor*mean(z(:)); % threshold at 100X average noise level
+%PARAMETER                                                            
+                    if t < 4e-3, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
                     %
-                    std_factor = 6;
-                    t = median(z(:)) + std_factor*std(z(:));
-                    %                                        
-                    z = (s2 > t);                    
-%figure(debug_h);subplot(2,4,k);hist(log(sqrt(s2)),400);grid on;xlabel(num2str(log(sqrt(t))));
+                    z = (s_ > t);
+                    %                    
+%figure(debug_h);subplot(2,4,k);plot(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));                    
+
                     %
                     min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
                     %
@@ -443,6 +457,7 @@ end
                     z = imclose(z,SE);
                     z = bwareaopen(z,min_size);
                     obj.current_ADC_segmented(:,k) = z;
+
                     %
                 else % shouldn't happen
                     obj.current_ADC_segmented(:,k) = zeros(size(s)); % stupid
@@ -562,20 +577,61 @@ end
         function pre_process_IMU(obj,type,~)
             
             if isempty(obj.current_data), return, end;
-
+            %
             obj.current_IMU_pre_processed = zeros(size(obj.current_data.IMU));            
-            %
-            % to do
-            %
+            num_IMU_channels = size(obj.current_data.IMU,2);
+            for k = 1 : num_IMU_channels
+                %
+                s = obj.current_data.IMU(:,k);
+                    avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_IMU);
+                    %
+                    [s,~] = TD_high_pass_filter( s, avr_window );
+                    %                    
+                    obj.current_IMU_pre_processed(:,k) = sqrt(s.*s);                
+            end
         end
 %-------------------------------------------------------------------------%                
         function segment_IMU(obj,type,~)        
             if isempty(obj.current_data), return, end;
 
             obj.current_IMU_segmented = zeros(size(obj.current_data.IMU));            
-            %
-            % to do
             %            
+%debug_h = figure;            
+            num_IMU_channels = size(obj.current_data.IMU,2);
+            hw = waitbar(0,[type ' segmenting IMU - please wait']);
+            for k = 1 : num_IMU_channels
+                if ~isempty(hw), waitbar(k/num_IMU_channels,hw); drawnow, end;
+                s_ = obj.current_IMU_pre_processed(:,k);
+                    %
+%                     [N,X] = hist(s_(:),300);
+%                     T = find(N==max(N(:)));                    
+%                     t = min(s_(:)) + 100*( X(min(T(:))) - min(s_(:)) );
+%                     %                                        
+%                     z = (s_ > t);                    
+
+%PARAMETER 
+                    t = quantile(s_(:),0.1); %  take low 10% of signal
+                    z = s_(s_<t);
+                    %
+%PARAMETER                                        
+                    SN_factor = 200;
+                    t = SN_factor*mean(z(:)); % threshold at 100X average noise level
+%PARAMETER                                                            
+                    if t < 0.05, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
+                    %
+                    z = (s_ > t);
+                    %                    
+%figure(debug_h);subplot(1,num_IMU_channels,k);semilogy(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));
+                    %
+                    min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_IMU); % sic!
+                    %
+                    SE = strel('line',min_size,90);
+                    z = imclose(z,SE);
+                    z = bwareaopen(z,min_size);
+                    obj.current_IMU_segmented(:,k) = z;
+                    %
+            end
+            if ~isempty(hw), delete(hw), drawnow; end;                                                
         end
 %-------------------------------------------------------------------------%                
         function calculate_PSDs(obj,~,~)        
@@ -835,6 +891,36 @@ a_ranksum = 0.01;
                             end
                         end
                    end        
+        end
+%-------------------------------------------------------------------------%
+        function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
+        % NB - this function presumes that both ADC and IMU
+        % segmentations are stored in CURRENT, and excludes ADC findings
+        % if intersected with IMU
+            if obj.exclude_IMU
+                    IMU_mask = sum(obj.current_IMU_segmented,2);
+                    IMU_mask(0~=IMU_mask)=1;   
+                    N2 = size(obj.current_ADC_segmented,1);
+                    exclusion_ADC_mask = (imresize(double(IMU_mask),[N2,1])>0.5);
+                    %
+                    num_ADC_channels = size(obj.current_ADC_segmented,2);
+                    hw = waitbar(0,'excluding IMU findings - please wait');
+                    for k = 1 : num_ADC_channels  
+                        if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
+                        s = obj.current_ADC_segmented(:,k);
+                        %
+                        labsegm = bwlabel(s);
+                        exclabs = unique(labsegm.*exclusion_ADC_mask);
+                        for elb=1:numel(exclabs)
+                            L = exclabs(elb);
+                            if 0~=L
+                               labsegm(labsegm==L)=0;
+                            end
+                        end                        
+                        obj.current_ADC_segmented(:,k) = (labsegm~=0);
+                    end
+                    if ~isempty(hw), delete(hw), drawnow; end;                                                            
+            end;
         end
 %-------------------------------------------------------------------------%         
     end % methods            
