@@ -1220,7 +1220,13 @@ function confusion_matrix_go_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to confusion_matrix_go_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+dc = handles.data_controller;
+[groups,CM] = dc.calculate_confusion_matrix('annotator"s + segmentation','Linear')
+if ~isempty(CM)
+    set(handles.confusion_matrix, 'Data',CM);
+    set(handles.confusion_matrix, 'RowName', dc.groups_selected);
+    set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);    
+end
 
 % --- Executes on selection change in pairwise_comparison_stats.
 function pairwise_comparison_stats_Callback(hObject, eventdata, handles)

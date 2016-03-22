@@ -943,6 +943,56 @@ a_ranksum = 0.01;
                     if ~isempty(hw), delete(hw), drawnow; end;                                                            
             end;
         end
+%-------------------------------------------------------------------------%
+        function [groups,CM] = calculate_confusion_matrix(obj,source_type,method,~)
+            
+            groups = [];
+            CM = [];
+            
+             % display annotated data in canonic coords
+                switch source_type                
+                    case 'annotator"s + segmentation'
+                        % data composed with selected featue vector but NOT filtered re selected groups    
+                        [data,IDX1] = obj.get_annotators_categorized_data('selected components');                
+                    case 'annotator"s only'
+                        % to do 
+                    case 'auto annotated'
+                        % to do                    
+                    otherwise                    
+                end
+                %
+                if isempty(data), return, end;
+                %
+                N = numel(IDX1);
+                IDX2 = zeros(size(IDX1));
+
+                        for i = 1:N    
+                            include = setdiff(1:N,i); 
+                            train_data = data(include,:);      
+                            train_group = IDX1(include,:);
+                            %
+                            switch method                
+                                case {'Linear','Quadratic'}                                                
+                                    IDX2(i) = classify(data(i,:),train_data,train_group,method);
+                                case {'kNN'}                                                    
+                                    IDX2(i) = knnclassify(data(i,:),train_data,train_group);
+                            end
+                            %                            
+                        end
+                %
+                %groups = sort(unique(IDX1));                            
+                %CM = zeros(numel(groups));
+                
+                % fast n dirty
+                CM = zeros(6);
+                for k=1:N,
+                    g1 = IDX1(k);
+                    g2 = IDX2(k);
+                    CM(g1,g2) = CM(g1,g2)+1;
+                end
+                CM = CM/sum(CM(:));
+    
+        end                                    
 %-------------------------------------------------------------------------%         
     end % methods            
 end
