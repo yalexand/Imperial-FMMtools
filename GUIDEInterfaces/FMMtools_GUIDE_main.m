@@ -779,8 +779,8 @@ function visualize_unsupervised_clustering(handles)
         elseif  strcmp('2D',unsup_vis_mode)
             axes(handles.unsupervised_clustering_pane);
             gscatter(v1,v2,IDX_color);
-            xlabel(handles.unsupervised_clustering_pane,'C1');
-            ylabel(handles.unsupervised_clustering_pane,'C2');
+            xlabel(handles.unsupervised_clustering_pane,'                   C1');
+            ylabel(handles.unsupervised_clustering_pane,'                   C2');
             legend(handles.unsupervised_clustering_pane,'off');
         end
 %-------------------------------------------------------------------------%        
@@ -1221,11 +1221,11 @@ function confusion_matrix_go_pushbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-[groups,CM] = dc.calculate_confusion_matrix('annotator"s + segmentation','Linear')
+[groups,CM] = dc.calculate_confusion_matrix('annotator"s + segmentation','Linear');
 if ~isempty(CM)
     set(handles.confusion_matrix, 'Data',CM);
-    set(handles.confusion_matrix, 'RowName', dc.groups_selected);
-    set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);    
+    set(handles.confusion_matrix, 'RowName', dc.groups_all(groups)); % must be dc_groups_selected
+    set(handles.confusion_matrix, 'ColumnName', dc.groups_all(groups));    
 end
 
 % --- Executes on selection change in pairwise_comparison_stats.

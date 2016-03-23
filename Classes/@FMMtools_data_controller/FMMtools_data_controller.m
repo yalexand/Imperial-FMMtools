@@ -102,7 +102,7 @@ classdef FMMtools_data_controller < handle
         ADC_sgm_signal_cutoff = 0.004; % weaker signals rejected
         ADC_sgm_SN = 100; % signal-to-noise
         %
-        annotators_delay = 0.4; % seconds
+        annotators_delay = 1.75; % seconds
                         
     end    
         
@@ -475,10 +475,8 @@ end
                     min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
                     %
                     SE = strel('line',min_size,90);
-                    z = imclose(z,SE);
-                    z = bwareaopen(z,min_size);
+                    z = imdilate(z,SE);
                     obj.current_ADC_segmented(:,k) = z;
-
                     %
                 else % shouldn't happen
                     obj.current_ADC_segmented(:,k) = zeros(size(s)); % stupid
@@ -645,7 +643,6 @@ end
                     %
                     SE = strel('line',min_size,90);
                     z = imdilate(z,SE); % to expand exclusion area a bit.. 
-                    z = bwareaopen(z,min_size);
                     obj.current_IMU_segmented(:,k) = z;
                     %
             end
@@ -900,7 +897,7 @@ a_ranksum = 0.01;
                         anno = obj.subj_data(subj).annotation;
                         anno_t = obj.subj_data(subj).annotation_time;                        
                         %
-                        anno_t = anno_t - obj.annotators_delay; % correct for finite human reaction time
+                        anno_t = anno_t; % - obj.annotators_delay; % correct for finite human reaction time
                         %
                         for k = 1:length(t1)
                             for a=1:length(anno_t)
@@ -949,17 +946,29 @@ a_ranksum = 0.01;
             groups = [];
             CM = [];
             
-             % display annotated data in canonic coords
                 switch source_type                
                     case 'annotator"s + segmentation'
                         % data composed with selected featue vector but NOT filtered re selected groups    
                         [data,IDX1] = obj.get_annotators_categorized_data('selected components');                
+                %                        
                     case 'annotator"s only'
                         % to do 
                     case 'auto annotated'
                         % to do                    
                     otherwise                    
                 end
+                % fix the data by retaining only wanted groups - starts
+                data_reducted = [];
+                IDX1_reducted = [];
+                for k = 1:numel(IDX1)
+                    if ~isempty(intersect(obj.groups_all(IDX1(k)),obj.groups_selected))
+                        data_reducted = [data_reducted; data(k,:)];
+                        IDX1_reducted = [IDX1_reducted; IDX1(k)];
+                    end
+                end
+                data = data_reducted;
+                IDX1 = IDX1_reducted;
+                % fix the data by retaining only wanted groups - ends
                 %
                 if isempty(data), return, end;
                 %
@@ -980,17 +989,27 @@ a_ranksum = 0.01;
                             %                            
                         end
                 %
-                %groups = sort(unique(IDX1));                            
-                %CM = zeros(numel(groups));
-                
-                % fast n dirty
-                CM = zeros(6);
+                groups = sort(unique(IDX1));                            
+                CM = zeros(numel(groups));
+                %
+                %
                 for k=1:N,
                     g1 = IDX1(k);
                     g2 = IDX2(k);
-                    CM(g1,g2) = CM(g1,g2)+1;
+                    i1 = find(groups==g1);
+                    i2 = find(groups==g2);
+                    CM(i1,i2) = CM(i1,i2)+1;
                 end
                 CM = CM/sum(CM(:));
+                                
+                % fast n dirty
+%                 CM = zeros(6);
+%                 for k=1:N,
+%                     g1 = IDX1(k);
+%                     g2 = IDX2(k);
+%                     CM(g1,g2) = CM(g1,g2)+1;
+%                 end
+%                 CM = CM/sum(CM(:));
     
         end                                    
 %-------------------------------------------------------------------------%         
