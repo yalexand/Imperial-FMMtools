@@ -78,6 +78,8 @@ set(handles.confusion_matrix, 'Data', eye(6));
 set(handles.confusion_matrix, 'RowName', data_controller.groups_all);
 set(handles.confusion_matrix, 'ColumnName', data_controller.groups_all);
 
+set(handles.supervised_classification_type, 'String', data_controller.supervised_learning_method);
+
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
 
@@ -1200,6 +1202,7 @@ function supervised_classification_type_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns supervised_classification_type contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from supervised_classification_type
+confusion_matrix_go_pushbutton_Callback(hObject, eventdata, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1221,7 +1224,11 @@ function confusion_matrix_go_pushbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-[groups,CM] = dc.calculate_confusion_matrix('annotator"s + segmentation','Linear');
+%
+methods = get(handles.supervised_classification_type,'String');
+method = char(methods(get(handles.supervised_classification_type,'Value')));
+%
+[groups,CM] = dc.calculate_confusion_matrix('annotator"s + segmentation',method);
 if ~isempty(CM)
     set(handles.confusion_matrix, 'Data',CM);
     set(handles.confusion_matrix, 'RowName', dc.groups_all(groups)); % must be dc_groups_selected

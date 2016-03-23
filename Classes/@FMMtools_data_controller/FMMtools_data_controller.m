@@ -37,6 +37,15 @@ classdef FMMtools_data_controller < handle
         groups_all = {'breathe','general','head','limb','startle','other'};
         groups_available = {'breathe','general','head','limb','startle','other'};
         groups_selected = {'breathe','general','startle'};
+        %
+        supervised_learning_method = {'Linear','Quadratic','kNN'};
+        % LDA    
+        % QDA    
+        % PCA-LDA
+        % PCA-QDA
+        % kNN   
+        % PCA-kNN
+        
                         
         corr_map_W = 80;
         
@@ -892,14 +901,20 @@ a_ranksum = 0.01;
             t1 = cell2mat(obj.ADC_trails_features_data(:,4));
             t2 = cell2mat(obj.ADC_trails_features_data(:,5));
             data = [];
-            IDX = [];        
+            IDX = [];  
+
+            % THIS IS ALL WRONG!!!!
+            
                    for subj = 1:numel(obj.subj_data)
+                                               
                         anno = obj.subj_data(subj).annotation;
                         anno_t = obj.subj_data(subj).annotation_time;                        
                         %
-                        anno_t = anno_t; % - obj.annotators_delay; % correct for finite human reaction time
-                        %
                         for k = 1:length(t1)
+                            
+                            %subj_name_k = obj.ADC_trails_features_data(k,1);
+                            %disp(subj_name_k);
+                            
                             for a=1:length(anno_t)
                                 if t1(k) <= anno_t(a) && anno_t(a) <= t2(k)                         
                                     IDX = [IDX; anno(a)];
@@ -908,7 +923,31 @@ a_ranksum = 0.01;
                                 end
                             end
                         end
-                   end        
+                   end                                      
+                    
+%                    d2 = obj.annotators_delay*obj.Fs_ADC;
+%                    d1 = 0.4*obj.Fs_ADC;
+% 
+%                    for subj = 1:numel(obj.subj_data)
+%                         anno = obj.subj_data(subj).annotation;
+%                         anno_t = obj.subj_data(subj).annotation_time; 
+%                         subj_name = obj.subj_data(subj).filename;
+%                         %
+%                         for a=1:length(anno_t)
+%                             for k = 1:length(t1)
+%                                 subj_name_k = obj.ADC_trails_features_data(k,1);                                
+%                                 if strcmp(subj_name_k,subj_name)
+%                                     T1 = anno_t(a) - d1 - d2;
+%                                     T2 = anno_t(a) - d1;
+%                                     if T1 <= t1(k) && t1(k) <= T2
+%                                         IDX = [IDX; anno(a)];
+%                                         data = [data; fv_data(k,:)];
+%                                         break;
+%                                     end
+%                                 end                                
+%                             end
+%                         end
+%                    end        
         end
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
@@ -1000,17 +1039,7 @@ a_ranksum = 0.01;
                     i2 = find(groups==g2);
                     CM(i1,i2) = CM(i1,i2)+1;
                 end
-                CM = CM/sum(CM(:));
-                                
-                % fast n dirty
-%                 CM = zeros(6);
-%                 for k=1:N,
-%                     g1 = IDX1(k);
-%                     g2 = IDX2(k);
-%                     CM(g1,g2) = CM(g1,g2)+1;
-%                 end
-%                 CM = CM/sum(CM(:));
-    
+                CM = CM/sum(CM(:));                                    
         end                                    
 %-------------------------------------------------------------------------%         
     end % methods            
