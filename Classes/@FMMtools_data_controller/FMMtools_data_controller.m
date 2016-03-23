@@ -996,8 +996,11 @@ a_ranksum = 0.01;
                 N = numel(IDX1);
                 IDX2 = zeros(size(IDX1));
 
+                        hw = waitbar(0,'"take one out"-ing - please wait');
                         for i = 1:N    
-                            include = setdiff(1:N,i); 
+                            if ~isempty(hw), waitbar(i/N,hw); drawnow, end;
+                            %
+                            include = setdiff(1:N,i);
                             train_data = data(include,:);      
                             train_group = IDX1(include,:);
                             %
@@ -1009,6 +1012,7 @@ a_ranksum = 0.01;
                             end
                             %                            
                         end
+                        if ~isempty(hw), delete(hw), drawnow; end;
                 %
                 groups = sort(unique(IDX1));                            
                 CM = zeros(numel(groups));
