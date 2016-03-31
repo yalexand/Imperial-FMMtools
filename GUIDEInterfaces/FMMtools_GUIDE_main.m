@@ -327,8 +327,8 @@ guidata(hObject, handles);
 %
 visualize_current_ADC_trails_features_data(handles);
 %
-set(handles.corrX_chooser,'String',dc.ADC_feature_names(6:length(dc.ADC_feature_names)));
-set(handles.corrY_chooser,'String',dc.ADC_feature_names(6:length(dc.ADC_feature_names)));
+set(handles.corrX_chooser,'String',dc.ADC_feature_names(7:length(dc.ADC_feature_names)));
+set(handles.corrY_chooser,'String',dc.ADC_feature_names(7:length(dc.ADC_feature_names)));
 
 % --- Executes on button press in supervised_classification_go.
 function supervised_classification_go_Callback(hObject, eventdata, handles)
@@ -728,7 +728,7 @@ function update_record_pane(handles)
                 
         piX = get(handles.corrX_chooser,'Value');
         piY = get(handles.corrY_chooser,'Value');        
-        offset = 6;                    
+        offset = 7;                    
         u1 = cell2mat(dc.ADC_trails_features_data(:,offset+piX-1));
         u2 = cell2mat(dc.ADC_trails_features_data(:,offset+piY-1));
                 

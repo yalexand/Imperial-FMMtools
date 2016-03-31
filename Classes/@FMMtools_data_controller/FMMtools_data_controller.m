@@ -562,9 +562,9 @@ end
                     % first, one needs to normalize the signal, e.g. by dividing it by the
                     % intensity of its fluctuation level
                     fl = abs(s(~z));
-                    fl_t = quantile(fl(:),0.75);
-                    fl = fl(fl<fl_t); % get the weakest 75% part
-                    s = s/std(fl(:)); % normalize by its std
+                    fl_t = quantile(fl(:),0.10);
+                    fl = fl(fl<fl_t); % get the weakest 10% part
+                    s = s/median(fl(:)); % normalize by its median
                     %
                     z_lab = bwlabel(z);
                     %                
@@ -606,7 +606,7 @@ end
 %                         xlabel(num2str([R1 R2 R3]));
 %                         disp('plotting');                        
                                                 
-                        feats_k = [feats_k; [k l t1 t2 length(s_l) p1 p2 p3 ... 
+                        feats_k = [feats_k; [subj_ind k l t1 t2 length(s_l) p1 p2 p3 ... 
                             R1 R2 R3 ... 
                             p4]];
                         fnames = [fnames; cellstr(obj.current_filename)];
@@ -618,7 +618,7 @@ end
             end
             %
             % add new features names here
-            feature_names = {'filename','detector_index','trail_index','t1','t2','trail_length', ...
+            feature_names = {'filename','subject_index','detector_index','trail_index','t1','t2','trail_length', ...
                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             %
@@ -802,7 +802,7 @@ end
         function data = get_selected_feature_vector_data(obj,~,~)
             data = [];
             [~,record_length] = size(obj.ADC_trails_features_data);
-            all_data = cell2mat(obj.ADC_trails_features_data(:,6:record_length)); % 6 is offset
+            all_data = cell2mat(obj.ADC_trails_features_data(:,7:record_length)); % 7 is offset
             assert(size(all_data,2)==numel(obj.ADC_fv_all));
             for m = 1:numel(obj.ADC_fv_all),            
                 for k = 1:numel(obj.ADC_fv_selected),
@@ -940,8 +940,8 @@ a_ranksum = 0.01;
                         for a=1:length(anno_t)
                         if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
                             for k = 1:length(t1)
-                                subj_name_k = obj.ADC_trails_features_data(k,1);                                
-                                if strcmp(subj_name_k,subj_name)
+                                subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
+                                if (subj_index_k == subj)
                                     T1 = anno_t(a) - d1 - d2;
                                     T2 = anno_t(a) - d1;
                                     if T1 <= t1(k) && t1(k) <= T2
