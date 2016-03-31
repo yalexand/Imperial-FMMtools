@@ -525,8 +525,8 @@ function update_record_pane(handles)
         Fs = dc.Fs_IMU;
     end
 
-        org_plot_mode = 'k-';
-        prp_plot_mode = 'b-';
+        org_plot_mode = 'k.-';
+        prp_plot_mode = 'b.-';
         sgm_plot_mode = 'r-';
 
         % annotations

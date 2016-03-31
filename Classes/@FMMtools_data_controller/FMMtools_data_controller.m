@@ -31,7 +31,7 @@ classdef FMMtools_data_controller < handle
         ADC_trails_features_data = []; 
         ADC_feature_names = [];
         % feature vector
-        ADC_fv_all = {'trail_length', 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
+        ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
         ADC_fv_selected = {'entropy','energy'};
         % available "conditions", i.e. types of motion
         groups_all = {'breathe','general','head','limb','startle','other'};
@@ -573,10 +573,10 @@ end
                         s_l = s(z_lab==l);
                         p1 = wentropy(s_l,'shannon')/length(s_l);
                         p2 = wentropy(s_l,'log energy')/length(s_l);
-                            [C,L] = wavedec(s_l,4,'sym4');
+                            [C,L] = wavedec(s_l,6,'sym6');
                             [Ea,Ed] = wenergy(C,L); %these are normalized
                         p3 = Ea;
-                        p4 = Ed; % this one, - contains 4 numbers
+                        p4 = Ed; % this one, - contains 6 numbers
                         %
                         % start time, end time...
                         dt = t(z_lab==l);
@@ -585,8 +585,32 @@ end
                         %
                         % this is the place to calculate more features ...
                         %                    
-                        feats_k = [feats_k; [k l t1 t2 length(s_l) p1 p2 p3 p4]];
+                                                
+                        [ Omega, psd ] = PSD( s_l,obj.Fs_ADC );
+                         
+                        I1 = sum(psd(1.1<=Omega&Omega<=1.5)); % Heartbeat
+                        I2 = sum(psd(2.2<=Omega&Omega<=3)); % 2x Heartbeat
+                        I3 = sum(psd(7<=Omega&Omega<=9)); % 8.3 Hz
+                         
+                        ILF = sum(psd(0<=Omega&Omega<=16));
+                         
+                        R1 = I1/ILF;
+                        R2 = I2/ILF;
+                        R3 = I3/ILF;
+                        % 
+%                         figure(23);
+%                         subplot(2,1,1);
+%                         plot(1:length(s_l),s_l,'k.-'); grid on;
+%                         subplot(2,1,2);
+%                         semilogy(Omega,psd,'b.-'); grid on;
+%                         xlabel(num2str([R1 R2 R3]));
+%                         disp('plotting');                        
+                                                
+                        feats_k = [feats_k; [k l t1 t2 length(s_l) p1 p2 p3 ... 
+                            R1 R2 R3 ... 
+                            p4]];
                         fnames = [fnames; cellstr(obj.current_filename)];
+                                                                                                    
                     end
                     feats = [feats; feats_k];
                 end
@@ -595,8 +619,8 @@ end
             %
             % add new features names here
             feature_names = {'filename','detector_index','trail_index','t1','t2','trail_length', ...
-                'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
-            obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','Ed1','Ed2','Ed3','Ed4'};
+                'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
+            obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             %
             trails_features = [fnames num2cell(feats)];            
 
