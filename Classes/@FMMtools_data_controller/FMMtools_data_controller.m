@@ -38,15 +38,8 @@ classdef FMMtools_data_controller < handle
         groups_available = {'breathe','general','head','limb','startle','other'};
         groups_selected = {'breathe','general','startle'};
         %
-        supervised_learning_method = {'Linear','Quadratic','kNN'};
-        % LDA    
-        % QDA    
-        % PCA-LDA
-        % PCA-QDA
-        % kNN   
-        % PCA-kNN
-        
-                        
+        supervised_learning_method = {'Linear','Quadratic','kNN','PCA->Linear','PCA->Quadratic','PCA->kNN'};
+                                
         corr_map_W = 80;
         
     end                    
@@ -111,7 +104,8 @@ classdef FMMtools_data_controller < handle
         ADC_sgm_signal_cutoff = 0.004; % weaker signals rejected
         ADC_sgm_SN = 100; % signal-to-noise
         %
-        annotators_delay = 1.75; % seconds
+        annotators_delay = 2; % seconds
+        annotators_reaction = 0.4; % seconds
                         
     end    
         
@@ -376,6 +370,9 @@ end
                 settings.ADC_sgm_low_signal_quantile = obj.ADC_sgm_low_signal_quantile;
                 settings.ADC_sgm_signal_cutoff = obj.ADC_sgm_signal_cutoff;
                 settings.ADC_sgm_SN = obj.ADC_sgm_SN;                
+                %
+                settings.annotators_delay = obj.annotators_delay;
+                settings.annotators_reaction = obj.annotators_reaction;                
             try
                 xml_write(fname,settings);
             catch
@@ -407,6 +404,9 @@ end
                 obj.ADC_sgm_low_signal_quantile = settings.ADC_sgm_low_signal_quantile;
                 obj.ADC_sgm_signal_cutoff = settings.ADC_sgm_signal_cutoff;
                 obj.ADC_sgm_SN = settings.ADC_sgm_SN;                                
+                %
+                obj.annotators_delay = settings.annotators_delay;
+                obj.annotators_reaction = settings.annotators_reaction;                                
              end
         end
 %-------------------------------------------------------------------------%
@@ -929,7 +929,7 @@ a_ranksum = 0.01;
             IDX = [];  
                     
             d2 = obj.annotators_delay;
-            d1 = 0.4; % [second] - minimal discernable time between event and annotation
+            d1 = obj.annotators_reaction; % [second] - minimal discernable time between event and annotation
 
                    for subj = 1:numel(obj.subj_data)
                         anno = obj.subj_data(subj).annotation;
@@ -937,6 +937,7 @@ a_ranksum = 0.01;
                         subj_name = obj.subj_data(subj).filename;
                         %
                         hw = waitbar(0,[ subj_name ' annotations - please wait']);
+                        
                         for a=1:length(anno_t)
                         if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
                             for k = 1:length(t1)
@@ -952,6 +953,7 @@ a_ranksum = 0.01;
                                 end                                
                             end
                         end
+
                         if ~isempty(hw), delete(hw), drawnow; end;           
                    end        
         end
@@ -1014,31 +1016,57 @@ a_ranksum = 0.01;
                 data = data_reducted;
                 IDX1 = IDX1_reducted;
                 % fix the data by retaining only wanted groups - ends
+                
+                % PCA data if needed, & choose first 3 compnents
+                truncation = 3;                                
+                if ~isempty(strfind(method,'PCA')) && size(data,2)>=truncation
+                    V = cov(data);
+                    %V = cov(zscore(data)); % ?? no diff..
+                    SD = sqrt(diag(V));
+                    R = V./(SD*SD');
+                    COEFF = pcacov(R);
+                    U = data*COEFF;
+                    data = U(:,1:truncation);                                
+                end
+                % PCA data if needed, & choose first 3 compnents
+                
                 %
                 if isempty(data), return, end;
                 %
                 N = numel(IDX1);
                 IDX2 = zeros(size(IDX1));
-
+                %
+                groups = sort(unique(IDX1)); 
+                %
                         hw = waitbar(0,'"take one out"-ing - please wait');
-                        for i = 1:N    
-                            if ~isempty(hw), waitbar(i/N,hw); drawnow, end;
-                            %
-                            include = setdiff(1:N,i);
-                            train_data = data(include,:);      
-                            train_group = IDX1(include,:);
-                            %
-                            switch method                
-                                case {'Linear','Quadratic'}                                                
-                                    IDX2(i) = classify(data(i,:),train_data,train_group,method);
-                                case {'kNN'}                                                    
-                                    IDX2(i) = knnclassify(data(i,:),train_data,train_group);
+                        try
+                            for i = 1:N    
+                                if ~isempty(hw), waitbar(i/N,hw); drawnow, end;
+                                %
+                                include = setdiff(1:N,i);
+                                train_data = data(include,:);      
+                                train_group = IDX1(include,:);
+                                %
+                                switch method                
+                                    case {'Linear','Quadratic','PCA->Linear','PCA->Quadratic'}
+                                        if ~isempty(strfind(method,'Linear'))
+                                            IDX2(i) = classify(data(i,:),train_data,train_group,'Linear');
+                                        else
+                                            IDX2(i) = classify(data(i,:),train_data,train_group,'Quadratic');
+                                        end
+                                    case {'kNN','PCA->kNN'}
+                                        IDX2(i) = knnclassify(data(i,:),train_data,train_group);
+                                end
+                                %                            
                             end
-                            %                            
+                        catch
+                            if ~isempty(hw), delete(hw), drawnow; end;                                                        
+                                errordlg('classify error - possibly not enough data..');
+                                    CM = eye(numel(groups));
+                                        return;
                         end
                         if ~isempty(hw), delete(hw), drawnow; end;
-                %
-                groups = sort(unique(IDX1));                            
+                %                           
                 CM = zeros(numel(groups));
                 %
                 %
