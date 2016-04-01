@@ -535,6 +535,7 @@ function update_record_pane(handles)
         h_plot_mode = 'gx';
         l_plot_mode = 'gd';
         s_plot_mode = 'g*';     
+        o_plot_mode = 'g+';             
     
         rec = [];
         prp = [];
@@ -572,7 +573,7 @@ function update_record_pane(handles)
         annos = dc.current_annotation;
         annos_times = dc.current_annotation_time;
 
-        % 'bghls' - > '12345'
+        % 'bghlso' - > '123456'
         b = (annos==1);
         t_b = annos_times(b);
         %
@@ -587,12 +588,18 @@ function update_record_pane(handles)
         %
         s = (annos==5);
         t_s = annos_times(s);
-
+        %
+        o = (annos==6);
+        t_o = annos_times(o);
+        
+        annos_names = dc.groups_all(sort(unique(annos)));
+        
         b=ones(size(t_b))*base;
         g=ones(size(t_g))*base;
         h=ones(size(t_h))*base;
         l=ones(size(t_l))*base;
         s=ones(size(t_s))*base;
+        o=ones(size(t_o))*base;        
         
     elseif 2==rec_type_index
         
@@ -609,6 +616,8 @@ function update_record_pane(handles)
         t_l = [];
         s = [];
         t_s = [];
+        o = [];
+        t_o = [];        
                 
         sgm = dc.current_IMU_segmented(:,channel_index);
         % to display segmented signal..
@@ -628,9 +637,11 @@ function update_record_pane(handles)
         % 2^3  = 8 combinations
         if vis_org && ~vis_prp && ~vis_sgm || (~vis_org && ~vis_prp && ~vis_sgm)
             plot(handles.record_pane,t,rec,org_plot_mode);
+            legend(handles.record_pane,'org');            
         elseif vis_org && vis_prp && ~vis_sgm
             YLIMS = [min([rec(:); prp(:)]) max([rec(:); prp(:)])];
             plot(handles.record_pane,t,rec,org_plot_mode,t,prp,prp_plot_mode);
+            legend(handles.record_pane,{'org','prp'});            
         elseif vis_org && vis_prp && vis_sgm
             YLIMS = [min([rec(:); prp(:); sgm(:)]) max([rec(:); prp(:); sgm(:)])];
             plot(handles.record_pane,t,rec,org_plot_mode,t,prp,prp_plot_mode,t,sgm,sgm_plot_mode, ... 
@@ -638,7 +649,9 @@ function update_record_pane(handles)
                 t_g,g,g_plot_mode, ...
                 t_h,h,h_plot_mode, ...
                 t_l,l,l_plot_mode, ...
-                t_s,s,s_plot_mode);
+                t_s,s,s_plot_mode, ...
+                t_o,o,o_plot_mode);
+            legend(handles.record_pane,[{'org','prp','sgm'},annos_names]);
         elseif vis_org && ~vis_prp && vis_sgm
             YLIMS = [min([rec(:); sgm(:)]) max([rec(:); sgm(:)])];
             plot(handles.record_pane,t,rec,org_plot_mode,t,sgm,sgm_plot_mode, ...
@@ -646,7 +659,9 @@ function update_record_pane(handles)
                 t_g,g,g_plot_mode, ...
                 t_h,h,h_plot_mode, ...
                 t_l,l,l_plot_mode, ...
-                t_s,s,s_plot_mode);            
+                t_s,s,s_plot_mode, ...
+                t_o,o,o_plot_mode);
+            legend(handles.record_pane,[{'org','sgm'},annos_names]);            
         elseif ~vis_org && vis_prp && vis_sgm
             YLIMS = [min([prp(:); sgm(:)]) max([prp(:); sgm(:)])];
             plot(handles.record_pane,t,prp,prp_plot_mode,t,sgm,sgm_plot_mode, ...
@@ -654,10 +669,13 @@ function update_record_pane(handles)
                 t_g,g,g_plot_mode, ...
                 t_h,h,h_plot_mode, ...
                 t_l,l,l_plot_mode, ...
-                t_s,s,s_plot_mode);
+                t_s,s,s_plot_mode, ...
+                t_o,o,o_plot_mode);
+            legend(handles.record_pane,[{'prp','sgm'},annos_names]);            
         elseif ~vis_org && vis_prp && ~vis_sgm
             YLIMS = [min(prp(:)) max(prp(:))];
             plot(handles.record_pane,t,prp,prp_plot_mode);
+            legend(handles.record_pane,'prp');            
         elseif ~vis_org && ~vis_prp && vis_sgm
             YLIMS = [min(sgm(:)) max(sgm(:))];
             plot(handles.record_pane,t,sgm,sgm_plot_mode, ...
@@ -665,7 +683,9 @@ function update_record_pane(handles)
                 t_g,g,g_plot_mode, ...
                 t_h,h,h_plot_mode, ...
                 t_l,l,l_plot_mode, ...
-                t_s,s,s_plot_mode);
+                t_s,s,s_plot_mode, ...
+                t_o,o,o_plot_mode);
+            legend(handles.record_pane,['sgm',annos_names]);            
         end
                     
         grid(handles.record_pane,'on');
