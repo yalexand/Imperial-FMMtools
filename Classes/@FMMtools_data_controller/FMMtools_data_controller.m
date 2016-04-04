@@ -86,7 +86,7 @@ classdef FMMtools_data_controller < handle
         ADC_prprss_notch_comb_fb = 39.1328; % base frequency, Hz
         ADC_prprss_notch_comb_bw = 0.0022; % bandwidth        
         %
-        segmentation_types = {'moving average subtraction + thresholding','...'};
+        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding ("same for all")'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
         %
@@ -446,7 +446,7 @@ end
                 end
             end
             if ~isempty(hw), delete(hw), drawnow; end;
-                        
+            %                        
         end
 %-------------------------------------------------------------------------%        
         function segment_ADC(obj,type,~)
@@ -457,39 +457,87 @@ end
                                
 %debug_h = figure();
             num_ADC_channels = size(obj.current_data.ADC,2);
-            hw = waitbar(0,[type ' segmenting ADC - please wait']);
-            for k = 1 : num_ADC_channels
-                if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
-                s = obj.current_ADC_pre_processed(:,k);
-                if strcmp(type,'moving average subtraction + thresholding')
-                    %
-                    avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);
-                    %
-                    [s,~] = TD_high_pass_filter( s, avr_window );
-                    %                    
-                    s_ = sqrt(s.*s);
-                    %                      
-                    t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); %  take low 10% of signal
-                    z = s_(s_<t);
-                    %
-                    t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
-                    %
-                    if t < obj.ADC_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
-                    %
-                    z = (s_ > t);
-                    %                    
-%figure(debug_h);subplot(2,4,k);plot(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));                    
 
-                    %
-                    min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
-                    %
-                    SE = strel('line',min_size,90);
-                    z = imdilate(z,SE);
-                    obj.current_ADC_segmented(:,k) = z;
-                    %
-                else % shouldn't happen
-                    obj.current_ADC_segmented(:,k) = zeros(size(s)); % stupid
+            hw = waitbar(0,[type ' segmenting ADC - please wait']);            
+            if strcmp(type,'moving average subtraction + thresholding')            
+
+                for k = 1 : num_ADC_channels
+                    if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
+                    s = obj.current_ADC_pre_processed(:,k);
+                        %
+                        avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);
+                        %
+                        [s,~] = TD_high_pass_filter( s, avr_window );
+                        %                    
+                        s_ = sqrt(s.*s);
+                        %                      
+                        t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); %  take low 10% of signal
+                        z = s_(s_<t);
+                        %
+                        t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
+                        %
+                        if t < obj.ADC_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
+                        %
+                        z = (s_ > t);
+                        %                    
+%figure(debug_h);subplot(2,4,k);plot(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));                    
+                        %
+                        min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
+                        %
+                        SE = strel('line',min_size,90);
+                        z = imdilate(z,SE);
+                        obj.current_ADC_segmented(:,k) = z;                
                 end
+            elseif strcmp(type,'ICA assisted thresholding ("same for all")') 
+                mixedsig = [];        
+                for k = 1 : num_ADC_channels
+                        s = squeeze(obj.current_ADC_pre_processed(:,k)');
+                        if 0~=sum(s);
+                            mixedsig = [mixedsig; s];
+                        end
+                end
+                icasig = fastica(mixedsig,'numofic',2);
+                    s1 = icasig(1,:)';
+                    s2 = icasig(2,:)';
+%                         h = figure(22);
+%                         [S1,S2] = size(icasig);
+%                         plot(1:S2,s1-mean(s1),'b.-',1:S2,s2-mean(s2),'r.-');
+                        % rest is similar..
+                        avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);
+                        %
+                        [s1,~] = TD_high_pass_filter( s1, avr_window );
+                        [s2,~] = TD_high_pass_filter( s2, avr_window );
+                        %                    
+                        t1 = quantile(s1(:),obj.ADC_sgm_low_signal_quantile); %  take low 10% of signal
+                        t2 = quantile(s1(:),obj.ADC_sgm_low_signal_quantile); %  
+                        z1 = s1(s1<t1);
+                        z2 = s2(s2<t2);
+                        f1 = mean(z1(:));
+                        f2 = mean(z2(:));
+                        %
+                        s_ = sqrt(abs(s1/f1.*s2/f2));
+                        t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); 
+                        z = s_(s_<t);
+                        %
+                        %t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
+                        t = 40*mean(z(:)); % better
+                        %
+                        z = (s_ > t);
+                        %                    
+%figure(debug_h);subplot(2,4,k);plot(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));                    
+                        %
+                        min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
+                        %
+                        SE = strel('line',min_size,90);
+                        z = imdilate(z,SE);
+                        for k = 1 : num_ADC_channels% fcuk it..
+                            s = squeeze(obj.current_ADC_pre_processed(:,k)');
+                            if 0~=sum(s);
+                                obj.current_ADC_segmented(:,k) = z;
+                            else
+                                obj.current_ADC_segmented(:,k) = zeros(size(z));
+                            end
+                        end                                        
             end
             
             % extract annotation
@@ -590,7 +638,7 @@ end
                          
                         I1 = sum(psd(1.1<=Omega&Omega<=1.5)); % Heartbeat
                         I2 = sum(psd(2.2<=Omega&Omega<=3)); % 2x Heartbeat
-                        I3 = sum(psd(7<=Omega&Omega<=9)); % 8.3 Hz
+                        I3 = sum(psd(6<=Omega&Omega<=9)); % 8.3 Hz
                          
                         ILF = sum(psd(0<=Omega&Omega<=16));
                          
