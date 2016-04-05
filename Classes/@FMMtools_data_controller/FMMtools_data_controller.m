@@ -86,7 +86,7 @@ classdef FMMtools_data_controller < handle
         ADC_prprss_notch_comb_fb = 39.1328; % base frequency, Hz
         ADC_prprss_notch_comb_bw = 0.0022; % bandwidth        
         %
-        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding ("same for all")'};
+        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
         %
@@ -482,13 +482,15 @@ end
                         %                    
 %figure(debug_h);subplot(2,4,k);plot(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));                    
                         %
-                        min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
-                        %
-                        SE = strel('line',min_size,90);
-                        z = imdilate(z,SE);
-                        obj.current_ADC_segmented(:,k) = z;                
+                        if 0~=sum(z)
+                            min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
+                            %
+                            SE = strel('line',min_size,90);
+                            z = imdilate(z,SE);
+                        end
+                        obj.current_ADC_segmented(:,k) = z;
                 end
-            elseif strcmp(type,'ICA assisted thresholding ("same for all")') 
+            elseif strcmp(type,'ICA assisted thresholding') 
                 mixedsig = [];        
                 for k = 1 : num_ADC_channels
                         s = squeeze(obj.current_ADC_pre_processed(:,k)');
@@ -499,9 +501,18 @@ end
                 icasig = fastica(mixedsig,'numofic',2);
                     s1 = icasig(1,:)';
                     s2 = icasig(2,:)';
-%                         h = figure(22);
-%                         [S1,S2] = size(icasig);
-%                         plot(1:S2,s1-mean(s1),'b.-',1:S2,s2-mean(s2),'r.-');
+                    
+                    % debug
+%                          icasig = fastica(mixedsig);
+%                          h = figure(22);
+%                          [S1,S2] = size(icasig);
+%                          for k=1:S1
+%                              figure(h);
+%                              subplot(S1,1,k);
+%                              plot(1:S2,icasig(k,:)','k.-');
+%                          end
+                    % debug
+
                         % rest is similar..
                         avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);
                         %
@@ -520,7 +531,7 @@ end
                         z = s_(s_<t);
                         %
                         %t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
-                        t = 40*mean(z(:)); % better
+                        t = 20*mean(z(:)); % better
                         %
                         z = (s_ > t);
                         %                    
@@ -530,7 +541,7 @@ end
                         %
                         SE = strel('line',min_size,90);
                         z = imdilate(z,SE);
-                        for k = 1 : num_ADC_channels% fcuk it..
+                        for k = 1 : num_ADC_channels% same for all
                             s = squeeze(obj.current_ADC_pre_processed(:,k)');
                             if 0~=sum(s);
                                 obj.current_ADC_segmented(:,k) = z;
@@ -593,32 +604,158 @@ end
 %-------------------------------------------------------------------------%        
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
 
-            feats = [];
-            fnames = [];
+%             feats = []; 
+%             fnames = [];
+%             for subj_ind = 1:length(obj.subj_filenames)
+%                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
+%                 hw = waitbar(0,'Extracting trails features - please wait');
+%                 num_ADC_channels = size(obj.current_data.ADC,2);        
+%                 for k = 1 : num_ADC_channels
+%                     if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
+%                     feats_k = [];
+%                     s = obj.current_ADC_pre_processed(:,k);
+%                     % can't normalize otherwise - subtract LF trend
+%                     avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);                        
+%                     [s,~] = TD_high_pass_filter( s, avr_window );                    
+%                     %
+%                     z = obj.current_ADC_segmented(:,k);
+%                     %
+%                     if 1==unique(z), continue, end; % safety - skip "k" if whole k-trail was segmented
+%                     %
+%                     % first, one needs to normalize the signal, e.g. by dividing it by the
+%                     % intensity of its fluctuation level
+%                     fl = abs(s(~z));
+%                     fl_t = quantile(fl(:),0.10);
+%                     fl = fl(fl<fl_t); % get the weakest 10% part
+%                     s = s/median(fl(:)); % normalize by its median
+%                     %
+%                     z_lab = bwlabel(z);
+%                     %                
+%                     t =(0:length(z)-1)'/obj.Fs_ADC; % seconds
+%                     for l=1:max(z_lab)
+%                         s_l = s(z_lab==l);
+%                         p1 = wentropy(s_l,'shannon')/length(s_l);
+%                         p2 = wentropy(s_l,'log energy')/length(s_l);
+%                             [C,L] = wavedec(s_l,6,'sym6');
+%                             [Ea,Ed] = wenergy(C,L); %these are normalized
+%                         p3 = Ea;
+%                         p4 = Ed; % this one, - contains 6 numbers
+%                         %
+%                         % start time, end time...
+%                         dt = t(z_lab==l);
+%                         t1 = min(dt(:));
+%                         t2 = max(dt(:));
+%                         %
+%                         % this is the place to calculate more features ...
+%                         %                    
+%                                                 
+%                         [ Omega, psd ] = PSD( s_l,obj.Fs_ADC );
+%                          
+%                         I1 = sum(psd(1.1<=Omega&Omega<=1.5)); % Heartbeat
+%                         I2 = sum(psd(2.2<=Omega&Omega<=3)); % 2x Heartbeat
+%                         I3 = sum(psd(6<=Omega&Omega<=9)); % 8.3 Hz
+%                          
+%                         ILF = sum(psd(0<=Omega&Omega<=16));
+%                          
+%                         R1 = I1/ILF;
+%                         R2 = I2/ILF;
+%                         R3 = I3/ILF;
+%                         % 
+% %                         figure(23);
+% %                         subplot(2,1,1);
+% %                         plot(1:length(s_l),s_l,'k.-'); grid on;
+% %                         subplot(2,1,2);
+% %                         semilogy(Omega,psd,'b.-'); grid on;
+% %                         xlabel(num2str([R1 R2 R3]));
+% %                         disp('plotting');                        
+%                             
+%                         prm = [k l t1 t2 length(s_l) p1 p2 p3 R1 R2 R3 p4];
+%                         if 0~=sum(isinf(prm)) || 0~=sum(isnan(prm))
+%                             disp(prm);
+%                         else
+%                             feats_k = [feats_k; [subj_ind k l t1 t2 length(s_l) p1 p2 p3 ... 
+%                                 R1 R2 R3 ... 
+%                                 p4]];
+%                             fnames = [fnames; cellstr(obj.current_filename)];
+%                         end                                                                                                    
+%                     end % for l=1:max(z_lab)
+%                     feats = [feats; feats_k];
+%                 end % for k = 1 : num_ADC_channels
+%                 if ~isempty(hw), delete(hw), drawnow; end;
+%             end % for subj_ind = 1:length(obj.subj_filenames)
+%             %
+%             % add new features names here
+%             feature_names = {'filename','subject_index','detector_index','trail_index','t1','t2','trail_length', ...
+%                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
+%             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
+%             %
+%             trails_features = [fnames num2cell(feats)];            
+
+            
+            %%%%%%%%%%%%%%%% new proc
+            feats2 = []; 
+            fnames2 = [];                        
             for subj_ind = 1:length(obj.subj_filenames)
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
-                hw = waitbar(0,'Extracting trails features - please wait');
+
                 num_ADC_channels = size(obj.current_data.ADC,2);        
+                %
+                % one segmentation for all
+                SGM = obj.current_ADC_segmented(:,1);
+                for k = 2 : num_ADC_channels
+                    SGM = SGM | obj.current_ADC_segmented(:,k);
+                end
+                %
+                norm_meas = zeros(1,num_ADC_channels);
+                %
+                num_ADC_channels = size(obj.current_data.ADC,2);
+                
+                data_LF_subtracted = zeros(size(obj.current_ADC_pre_processed));
                 for k = 1 : num_ADC_channels
-                    if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
-                    feats_k = [];
                     s = obj.current_ADC_pre_processed(:,k); 
-                    z = obj.current_ADC_segmented(:,k);
+                    % can't normalize otherwise - subtract LF trend
+                    avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);                        
+                    [s,~] = TD_high_pass_filter( s, avr_window );                    
+                    data_LF_subtracted(:,k) = s;
+                end                    
+                %
+                for k = 1 : num_ADC_channels
+                    s = data_LF_subtracted(:,k); 
+                    %    
+                    if 0~=sum(s) && 0~= sum(squeeze(obj.current_ADC_segmented(:,k)))
+                        fl = abs(s(~SGM));
+                        fl_t = quantile(fl(:),0.10);
+                        fl = fl(fl<fl_t); % get the weakest 10% part
+                        norm_meas(k) = median(fl(:)); % normalize by its median
+                    end
+                end
+                %
+                z_lab = bwlabel(SGM);
+                %                
+                t =(0:length(SGM)-1)'/obj.Fs_ADC; % seconds
+                                
+                feats_subj = [];
+                fnames_subj = [];
+                hw = waitbar(0,'Extracting trails features - please wait');                                                
+                for l=1:max(z_lab)
+                    if ~isempty(hw), waitbar(l/max(z_lab),hw); drawnow, end;
+                    % for each segment.. look for best S/N channel
+                    M = -Inf;
+                    k_ = [];
+                    for k = 1 : num_ADC_channels
+                        ref = data_LF_subtracted(:,k);
+                        signal = ref(z_lab==l);
+                        measure = mean(abs(signal(:)))/norm_meas(k);
+                        if measure >= M
+                            k_=k;
+                            M = measure;
+                        end                        
+                    end
                     %
-                    if 1==unique(z), continue, end; % safety - skip "k" if whole k-trail was segmented
+                    ref = data_LF_subtracted(:,k_);
+                    s_l = ref(z_lab==l);
                     %
-                    % first, one needs to normalize the signal, e.g. by dividing it by the
-                    % intensity of its fluctuation level
-                    fl = abs(s(~z));
-                    fl_t = quantile(fl(:),0.10);
-                    fl = fl(fl<fl_t); % get the weakest 10% part
-                    s = s/median(fl(:)); % normalize by its median
-                    %
-                    z_lab = bwlabel(z);
-                    %                
-                    t =(1:length(z))'/obj.Fs_ADC; % seconds
-                    for l=1:max(z_lab)
-                        s_l = s(z_lab==l);
+                    % rest is more or less clear..
                         p1 = wentropy(s_l,'shannon')/length(s_l);
                         p2 = wentropy(s_l,'log energy')/length(s_l);
                             [C,L] = wavedec(s_l,6,'sym6');
@@ -653,24 +790,28 @@ end
 %                         semilogy(Omega,psd,'b.-'); grid on;
 %                         xlabel(num2str([R1 R2 R3]));
 %                         disp('plotting');                        
-                                                
-                        feats_k = [feats_k; [subj_ind k l t1 t2 length(s_l) p1 p2 p3 ... 
-                            R1 R2 R3 ... 
-                            p4]];
-                        fnames = [fnames; cellstr(obj.current_filename)];
-                                                                                                    
-                    end
-                    feats = [feats; feats_k];
-                end
+                            
+                        prm = [k l t1 t2 length(s_l) p1 p2 p3 R1 R2 R3 p4];
+                        if 0~=sum(isinf(prm)) || 0~=sum(isnan(prm))
+                            disp(prm);
+                        else
+                            feats_subj = [feats_subj; [subj_ind k l t1 t2 length(s_l) p1 p2 p3 ... 
+                                R1 R2 R3 ... 
+                                p4]];
+                            fnames_subj = [fnames_subj; cellstr(obj.current_filename)];
+                        end                                                                                                    
+                end % for l=1:max(z_lab)                                                            
                 if ~isempty(hw), delete(hw), drawnow; end;
-            end
-            %
-            % add new features names here
+                feats2 = [feats2; feats_subj];
+                fnames2 = [fnames2; fnames_subj];
+            end % for subj_ind = 1:length(obj.subj_filenames)
+            %%%%%%%%%%%%%%%% new proc            
+            % wow
             feature_names = {'filename','subject_index','detector_index','trail_index','t1','t2','trail_length', ...
                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
-            %
-            trails_features = [fnames num2cell(feats)];            
+            %        
+            trails_features = [fnames2 num2cell(feats2)];
 
         end
 %-------------------------------------------------------------------------%                
@@ -789,15 +930,19 @@ end
             data = obj.get_selected_feature_vector_data;
             
             switch type
-                
+
                 case 'KMeans'
-                  IDX = kmeans(data,n_clusters);
-                  %[~,~,stats] = manova1(data,IDX); ehm, fails
-                  %
-                  [coeff,score] = pca(data);
-                  coords = score; % score*coeff'; % ??? that gives something weird
-                  
-            end                        
+                    try                        
+                        IDX = kmeans(data,n_clusters);
+                        %[~,~,stats] = manova1(data,IDX); ehm, fails
+                        %
+                        [coeff,score] = pca(data);
+                        coords = score; % score*coeff'; % ??? that gives something weird
+                    catch
+                        errordlg('kmeans doesnt like these data, no output provided')
+                    end
+                    
+            end %switch type                        
                         
         end
 %-------------------------------------------------------------------------%  

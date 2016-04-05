@@ -542,6 +542,30 @@ function update_record_pane(handles)
         sgm = [];
         base = [];
         cap = [];
+        %
+        annos = dc.current_annotation;
+        annos_times = dc.current_annotation_time;
+
+        % 'bghlso' - > '123456'
+        b = (annos==1);
+        t_b = annos_times(b);
+        %
+        g = (annos==2);
+        t_g = annos_times(g);
+        %
+        h = (annos==3);
+        t_h = annos_times(h);
+        %
+        l = (annos==4);
+        t_l = annos_times(l);
+        %
+        s = (annos==5);
+        t_s = annos_times(s);
+        %
+        o = (annos==6);
+        t_o = annos_times(o);
+        
+        annos_names = dc.groups_all(sort(unique(annos)));
         
     if 1==rec_type_index
         
@@ -568,32 +592,7 @@ function update_record_pane(handles)
         base = median(z(:));
         cap = 3*std(z(:));
         sgm = ones(length(sgm),1)*base + sgm*cap;        
-        
-        %
-        annos = dc.current_annotation;
-        annos_times = dc.current_annotation_time;
-
-        % 'bghlso' - > '123456'
-        b = (annos==1);
-        t_b = annos_times(b);
-        %
-        g = (annos==2);
-        t_g = annos_times(g);
-        %
-        h = (annos==3);
-        t_h = annos_times(h);
-        %
-        l = (annos==4);
-        t_l = annos_times(l);
-        %
-        s = (annos==5);
-        t_s = annos_times(s);
-        %
-        o = (annos==6);
-        t_o = annos_times(o);
-        
-        annos_names = dc.groups_all(sort(unique(annos)));
-        
+                
         b=ones(size(t_b))*base;
         g=ones(size(t_g))*base;
         h=ones(size(t_h))*base;
