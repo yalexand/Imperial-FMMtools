@@ -604,97 +604,12 @@ end
 %-------------------------------------------------------------------------%        
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
 
-%             feats = []; 
-%             fnames = [];
-%             for subj_ind = 1:length(obj.subj_filenames)
-%                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
-%                 hw = waitbar(0,'Extracting trails features - please wait');
-%                 num_ADC_channels = size(obj.current_data.ADC,2);        
-%                 for k = 1 : num_ADC_channels
-%                     if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
-%                     feats_k = [];
-%                     s = obj.current_ADC_pre_processed(:,k);
-%                     % can't normalize otherwise - subtract LF trend
-%                     avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);                        
-%                     [s,~] = TD_high_pass_filter( s, avr_window );                    
-%                     %
-%                     z = obj.current_ADC_segmented(:,k);
-%                     %
-%                     if 1==unique(z), continue, end; % safety - skip "k" if whole k-trail was segmented
-%                     %
-%                     % first, one needs to normalize the signal, e.g. by dividing it by the
-%                     % intensity of its fluctuation level
-%                     fl = abs(s(~z));
-%                     fl_t = quantile(fl(:),0.10);
-%                     fl = fl(fl<fl_t); % get the weakest 10% part
-%                     s = s/median(fl(:)); % normalize by its median
-%                     %
-%                     z_lab = bwlabel(z);
-%                     %                
-%                     t =(0:length(z)-1)'/obj.Fs_ADC; % seconds
-%                     for l=1:max(z_lab)
-%                         s_l = s(z_lab==l);
-%                         p1 = wentropy(s_l,'shannon')/length(s_l);
-%                         p2 = wentropy(s_l,'log energy')/length(s_l);
-%                             [C,L] = wavedec(s_l,6,'sym6');
-%                             [Ea,Ed] = wenergy(C,L); %these are normalized
-%                         p3 = Ea;
-%                         p4 = Ed; % this one, - contains 6 numbers
-%                         %
-%                         % start time, end time...
-%                         dt = t(z_lab==l);
-%                         t1 = min(dt(:));
-%                         t2 = max(dt(:));
-%                         %
-%                         % this is the place to calculate more features ...
-%                         %                    
-%                                                 
-%                         [ Omega, psd ] = PSD( s_l,obj.Fs_ADC );
-%                          
-%                         I1 = sum(psd(1.1<=Omega&Omega<=1.5)); % Heartbeat
-%                         I2 = sum(psd(2.2<=Omega&Omega<=3)); % 2x Heartbeat
-%                         I3 = sum(psd(6<=Omega&Omega<=9)); % 8.3 Hz
-%                          
-%                         ILF = sum(psd(0<=Omega&Omega<=16));
-%                          
-%                         R1 = I1/ILF;
-%                         R2 = I2/ILF;
-%                         R3 = I3/ILF;
-%                         % 
-% %                         figure(23);
-% %                         subplot(2,1,1);
-% %                         plot(1:length(s_l),s_l,'k.-'); grid on;
-% %                         subplot(2,1,2);
-% %                         semilogy(Omega,psd,'b.-'); grid on;
-% %                         xlabel(num2str([R1 R2 R3]));
-% %                         disp('plotting');                        
-%                             
-%                         prm = [k l t1 t2 length(s_l) p1 p2 p3 R1 R2 R3 p4];
-%                         if 0~=sum(isinf(prm)) || 0~=sum(isnan(prm))
-%                             disp(prm);
-%                         else
-%                             feats_k = [feats_k; [subj_ind k l t1 t2 length(s_l) p1 p2 p3 ... 
-%                                 R1 R2 R3 ... 
-%                                 p4]];
-%                             fnames = [fnames; cellstr(obj.current_filename)];
-%                         end                                                                                                    
-%                     end % for l=1:max(z_lab)
-%                     feats = [feats; feats_k];
-%                 end % for k = 1 : num_ADC_channels
-%                 if ~isempty(hw), delete(hw), drawnow; end;
-%             end % for subj_ind = 1:length(obj.subj_filenames)
-%             %
-%             % add new features names here
-%             feature_names = {'filename','subject_index','detector_index','trail_index','t1','t2','trail_length', ...
-%                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
-%             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
-%             %
-%             trails_features = [fnames num2cell(feats)];            
-
+            feats = []; 
+            fnames = [];    
             
-            %%%%%%%%%%%%%%%% new proc
-            feats2 = []; 
-            fnames2 = [];                        
+            hw = waitbar(0,'Extracting trails features - please wait');
+            if ~isempty(hw), waitbar(1/20,hw); drawnow, end;
+            
             for subj_ind = 1:length(obj.subj_filenames)
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
 
@@ -736,7 +651,6 @@ end
                                 
                 feats_subj = [];
                 fnames_subj = [];
-                hw = waitbar(0,'Extracting trails features - please wait');                                                
                 for l=1:max(z_lab)
                     if ~isempty(hw), waitbar(l/max(z_lab),hw); drawnow, end;
                     % for each segment.. look for best S/N channel
@@ -782,36 +696,27 @@ end
                         R1 = I1/ILF;
                         R2 = I2/ILF;
                         R3 = I3/ILF;
-                        % 
-%                         figure(23);
-%                         subplot(2,1,1);
-%                         plot(1:length(s_l),s_l,'k.-'); grid on;
-%                         subplot(2,1,2);
-%                         semilogy(Omega,psd,'b.-'); grid on;
-%                         xlabel(num2str([R1 R2 R3]));
-%                         disp('plotting');                        
-                            
-                        prm = [k l t1 t2 length(s_l) p1 p2 p3 R1 R2 R3 p4];
+                        %                             
+                        prm = [k_ l t1 t2 length(s_l) p1 p2 p3 R1 R2 R3 p4];
                         if 0~=sum(isinf(prm)) || 0~=sum(isnan(prm))
                             disp(prm);
                         else
-                            feats_subj = [feats_subj; [subj_ind k l t1 t2 length(s_l) p1 p2 p3 ... 
+                            feats_subj = [feats_subj; [subj_ind k_ l t1 t2 length(s_l) p1 p2 p3 ... 
                                 R1 R2 R3 ... 
                                 p4]];
                             fnames_subj = [fnames_subj; cellstr(obj.current_filename)];
                         end                                                                                                    
                 end % for l=1:max(z_lab)                                                            
-                if ~isempty(hw), delete(hw), drawnow; end;
-                feats2 = [feats2; feats_subj];
-                fnames2 = [fnames2; fnames_subj];
+                feats = [feats; feats_subj];
+                fnames = [fnames; fnames_subj];
             end % for subj_ind = 1:length(obj.subj_filenames)
-            %%%%%%%%%%%%%%%% new proc            
-            % wow
+            if ~isempty(hw), delete(hw), drawnow; end;
+            %
             feature_names = {'filename','subject_index','detector_index','trail_index','t1','t2','trail_length', ...
                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             %        
-            trails_features = [fnames2 num2cell(feats2)];
+            trails_features = [fnames num2cell(feats)];
 
         end
 %-------------------------------------------------------------------------%                
