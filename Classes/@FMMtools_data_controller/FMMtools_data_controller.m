@@ -34,8 +34,8 @@ classdef FMMtools_data_controller < handle
         ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
         ADC_fv_selected = {'entropy','energy'};
         % available "conditions", i.e. types of motion
-        groups_all = {'breathe','general','head','limb','startle','other'};
-        groups_available = {'breathe','general','head','limb','startle','other'};
+        groups_all = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4'};
+        groups_available = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4'};
         groups_selected = {'breathe','general','startle'};
         %
         supervised_learning_method = {'Linear','Quadratic','kNN','PCA->Linear','PCA->Quadratic','PCA->kNN'};
@@ -1175,7 +1175,7 @@ a_ranksum = 0.01;
                     i2 = find(groups==g2);
                     CM(i1,i2) = CM(i1,i2)+1;
                 end
-                CM = CM/sum(CM(:));                                    
+                %CM = CM/sum(CM(:));                                    
         end                                    
 %-------------------------------------------------------------------------%         
     end % methods            
