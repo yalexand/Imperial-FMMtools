@@ -1177,11 +1177,9 @@ a_ranksum = 0.01;
                 %CM = CM/sum(CM(:));                                    
         end                                    
 %-------------------------------------------------------------------------%         
+        % "mocking" annotation function for debug
         function [data,IDX] = get_auto_categorized_data(obj,mode,~)
-            % data composed with selected featue vector but NOT filtered re selected groups    
-                        
-            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
-            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
+            % data composed with selected featue vector but NOT filtered re selected groups                            
             data = [];
             IDX = [];  
 
