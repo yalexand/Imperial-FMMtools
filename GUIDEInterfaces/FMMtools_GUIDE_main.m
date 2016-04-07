@@ -844,18 +844,14 @@ function visualize_supervised_clustering(handles)
             scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
         elseif  strcmp('2D',sup_vis_mode)
             axes(handles.supervised_classification_pane);
-            gscatter(v1,v2,IDX_color);
+            gscatter(v1,v2,IDX);
             xlabel(handles.supervised_classification_pane,'C1');
             ylabel(handles.supervised_classification_pane,'C2');
             %legend(handles.supervised_classification_pane,'off');            
         end
         % fix legends
         dc = handles.data_controller;
-        group_indices = unique(IDX);
-        LEGENDS = [];
-        for k=1:numel(group_indices)
-            LEGENDS = [LEGENDS dc.groups_all(group_indices(k))];
-        end
+        LEGENDS = dc.groups_all(sort(unique(IDX)));
         legend(handles.supervised_classification_pane,LEGENDS);
                         
 %-------------------------------------------------------------------------%  
