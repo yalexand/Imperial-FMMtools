@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 21-Mar-2016 14:17:54
+% Last Modified by GUIDE v2.5 07-Apr-2016 11:24:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -74,7 +74,7 @@ set(handles.pairwise_group_comparison_item2,'String',data_controller.groups_sele
 
 set(handles.exclude_strong_IMU_checkbox,'Value',data_controller.exclude_IMU);
 
-set(handles.confusion_matrix, 'Data', eye(6));
+set(handles.confusion_matrix, 'Data', zeros(6));
 set(handles.confusion_matrix, 'RowName', data_controller.groups_all);
 set(handles.confusion_matrix, 'ColumnName', data_controller.groups_all);
 
@@ -323,6 +323,7 @@ dc = handles.data_controller;
 dc.ADC_trails_features_data = [];
 dc.ADC_feature_names = [];
 [dc.ADC_trails_features_data,dc.ADC_feature_names] = dc.extract_features_current_ADC;
+
 guidata(hObject, handles);
 %
 visualize_current_ADC_trails_features_data(handles);
@@ -860,7 +861,7 @@ function setup_available_group_items(handles)
     set(handles.pairwise_group_comparison_item1,'String',dc.groups_available);
     set(handles.pairwise_group_comparison_item2,'String',dc.groups_available); 
     
-    set(handles.confusion_matrix, 'Data', eye(numel(dc.groups_selected)));
+    set(handles.confusion_matrix, 'Data', zeros(numel(dc.groups_selected)));
     set(handles.confusion_matrix, 'RowName', dc.groups_selected);
     set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);
 %-------------------------------------------------------------------------%      
@@ -1131,7 +1132,8 @@ function pairwise_group_comparison_go_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-type = 'annotator"s + segmentation'; % FOR NOW..
+anno_types = get(handles.supervised_learning_type,'String');
+type = char(anno_types(get(handles.supervised_learning_type,'Value')));
 %
 str = get(handles.pairwise_group_comparison_feature,'String');
 feature_vector_name = str(get(handles.pairwise_group_comparison_feature,'Value'));
@@ -1243,7 +1245,10 @@ dc = handles.data_controller;
 methods = get(handles.supervised_classification_type,'String');
 method = char(methods(get(handles.supervised_classification_type,'Value')));
 %
-[groups,CM] = dc.calculate_confusion_matrix('annotator"s + segmentation',method);
+anno_types = get(handles.supervised_learning_type,'String');
+anno_type = char(anno_types(get(handles.supervised_learning_type,'Value')));
+%
+[groups,CM] = dc.calculate_confusion_matrix(anno_type,method);
 if ~isempty(CM)
     set(handles.confusion_matrix, 'Data',CM);
     set(handles.confusion_matrix, 'RowName', dc.groups_all(groups)); % must be dc_groups_selected
@@ -1283,3 +1288,4 @@ function exclude_strong_IMU_checkbox_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of exclude_strong_IMU_checkbox
 dc = handles.data_controller;
 dc.exclude_IMU = get(handles.exclude_strong_IMU_checkbox,'Value');
+

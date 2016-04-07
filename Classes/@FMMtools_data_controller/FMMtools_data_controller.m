@@ -34,8 +34,8 @@ classdef FMMtools_data_controller < handle
         ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
         ADC_fv_selected = {'entropy','energy'};
         % available "conditions", i.e. types of motion
-        groups_all = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4'};
-        groups_available = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4'};
+        groups_all = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4','T5','T6','T7','T8'};
+        groups_available = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4','T5','T6','T7','T8'};
         groups_selected = {'breathe','general','startle'};
         %
         supervised_learning_method = {'Linear','Quadratic','kNN','PCA->Linear','PCA->Quadratic','PCA->kNN'};
@@ -869,7 +869,7 @@ end
                 case 'annotator"s only'
                     % to do 
                 case 'auto annotated'
-                    % to do
+                    [data,IDX] = obj.get_auto_categorized_data('selected components');
                     
                 otherwise
                     
@@ -935,7 +935,7 @@ end
                 case 'annotator"s only'
                     % to do 
                 case 'auto annotated'
-                    % to do
+                    [data,IDX] = obj.get_auto_categorized_data('all components');
                     
                 otherwise
                     
@@ -1094,12 +1094,11 @@ a_ranksum = 0.01;
                 switch source_type                
                     case 'annotator"s + segmentation'
                         % data composed with selected featue vector but NOT filtered re selected groups    
-                        [data,IDX1] = obj.get_annotators_categorized_data('selected components');                
-                %                        
+                        [data,IDX1] = obj.get_annotators_categorized_data('selected components');                                                                                                
                     case 'annotator"s only'
                         % to do 
-                    case 'auto annotated'
-                        % to do                    
+                    case 'auto annotated'                        
+                        [data,IDX1] = obj.get_auto_categorized_data('selected components');                        
                     otherwise                    
                 end
                 % fix the data by retaining only wanted groups - starts
@@ -1160,7 +1159,7 @@ a_ranksum = 0.01;
                         catch
                             if ~isempty(hw), delete(hw), drawnow; end;                                                        
                                 errordlg('classify error - possibly not enough data..');
-                                    CM = eye(numel(groups));
+                                    CM = zeros(numel(groups));
                                         return;
                         end
                         if ~isempty(hw), delete(hw), drawnow; end;
@@ -1177,6 +1176,91 @@ a_ranksum = 0.01;
                 end
                 %CM = CM/sum(CM(:));                                    
         end                                    
+%-------------------------------------------------------------------------%         
+        function [data,IDX] = get_auto_categorized_data(obj,mode,~)
+            % data composed with selected featue vector but NOT filtered re selected groups    
+                        
+            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
+            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
+            data = [];
+            IDX = [];  
+
+            [Nd,Nrec] = size(obj.ADC_trails_features_data);
+            
+            hw = waitbar(0,[ 'auto annotating - please wait']);
+            for k=1:Nd,
+                if ~isempty(hw), waitbar(k/Nd,hw); drawnow, end;
+                fv = cell2mat(obj.ADC_trails_features_data(k,7:Nrec));
+                %
+                % 1) multi - threshold threshold and define IDX among [T1 to T8]
+                R3 = fv(7);
+                Le = fv(1);
+                Ea = fv(4);
+                En = fv(2);
+                %
+                disordered  = true;
+                high_energy = true;
+                long = true;
+                %
+                if R3>0.03 % || En>2e-4 % not sure
+                    disordered = false;
+                end
+                if Ea<90 % ?
+                    high_energy = false;
+                end
+                if Le<513
+                    long = false;
+                end                                
+                %        
+                type = [];
+                if      high_energy && disordered && long
+                    type = 1;
+                elseif  high_energy && disordered && ~long
+                    type = 2';
+                elseif  high_energy && ~disordered && ~long
+                    type = 3;
+                elseif  high_energy && ~disordered && long
+                    type = 4;
+                elseif  ~high_energy && disordered && long
+                    type = 5;
+                elseif  ~high_energy && disordered && ~long
+                    type = 6;
+                elseif  ~high_energy && ~disordered && long
+                    type = 6; % NOT SATISFACTORY
+                elseif  ~high_energy && ~disordered && ~long
+                    type = 6; % NOT SATISFACTORY
+                end                
+                %
+                % type = type + 6;
+                
+                % 2) choose fv components                
+                switch mode
+                    
+                    case 'selected components'
+                        new_fv = [];
+                        for m = 1:numel(obj.ADC_fv_all),            
+                            for p = 1:numel(obj.ADC_fv_selected),
+                                if strcmp(char(obj.ADC_fv_all(m)),char(obj.ADC_fv_selected(p)))
+                                    new_fv = [new_fv fv(:,m)];
+                                end                
+                            end
+                        end
+                        data = [data; new_fv];
+                                                                                                
+                    case 'all components'
+                        data = [data; fv];
+                end
+                %
+                IDX = [IDX; type];
+            end
+                        
+            if ~isempty(hw), delete(hw), drawnow; end;           
+
+        end
+%-------------------------------------------------------------------------%
+        
+        
+        
 %-------------------------------------------------------------------------%         
     end % methods            
 end
