@@ -34,8 +34,8 @@ classdef FMMtools_data_controller < handle
         ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
         ADC_fv_selected = {'entropy','energy'};
         % available "conditions", i.e. types of motion
-        groups_all = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4','T5','T6','T7','T8'};
-        groups_available = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4','T5','T6','T7','T8'};
+        groups_all = {'breathe','general','head','limb','startle','other'};
+        groups_available = {'breathe','general','head','limb','startle','other'};
         groups_selected = {'breathe','general','startle'};
         %
         supervised_learning_method = {'Linear','Quadratic','kNN','PCA->Linear','PCA->Quadratic','PCA->kNN'};
@@ -474,7 +474,7 @@ end
                         t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); %  take low 10% of signal
                         z = s_(s_<t);
                         %
-                        t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
+                        t = obj.ADC_sgm_SN*median(z(:)); % threshold at 100X (or whatever) average noise level
                         %
                         if t < obj.ADC_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
                         %
@@ -523,15 +523,15 @@ end
                         t2 = quantile(s1(:),obj.ADC_sgm_low_signal_quantile); %  
                         z1 = s1(s1<t1);
                         z2 = s2(s2<t2);
-                        f1 = mean(z1(:));
-                        f2 = mean(z2(:));
+                        f1 = median(z1(:));
+                        f2 = median(z2(:));
                         %
                         s_ = sqrt(abs(s1/f1.*s2/f2));
                         t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); 
                         z = s_(s_<t);
                         %
-                        %t = obj.ADC_sgm_SN*mean(z(:)); % threshold at 100X (or whatever) average noise level
-                        t = 20*mean(z(:)); % better
+                        %t = obj.ADC_sgm_SN*median(z(:)); % threshold at 100X (or whatever) average noise level
+                        t = 20*median(z(:)); % better
                         %
                         z = (s_ > t);
                         %                    
@@ -758,7 +758,7 @@ end
                     t = quantile(s_(:),obj.IMU_sgm_low_signal_quantile); %  take low 10% of signal
                     z = s_(s_<t);
                     %
-                    t = obj.IMU_sgm_SN*mean(z(:)); % threshold at 200X (or whatever) average noise level
+                    t = obj.IMU_sgm_SN*median(z(:)); % threshold at 200X (or whatever) average noise level
                     %
                     if t < obj.IMU_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
                     %
@@ -1190,47 +1190,35 @@ a_ranksum = 0.01;
                 if ~isempty(hw), waitbar(k/Nd,hw); drawnow, end;
                 fv = cell2mat(obj.ADC_trails_features_data(k,7:Nrec));
                 %
-                % 1) multi - threshold threshold and define IDX among [T1 to T8]
+                % 1) multi-threshold and define IDX 
                 R3 = fv(7);
                 Le = fv(1);
                 Ea = fv(4);
-                En = fv(2);
+                % En = fv(2);
                 %
-                disordered  = true;
+                % groups_all = {'breathe','general','head','limb','startle','other'};
                 high_energy = true;
-                long = true;
-                %
-                if R3>0.03 % || En>2e-4 % not sure
-                    disordered = false;
+                extra_short = true;
+                harmonic = true;
+                if R3<0.03 % ?
+                    harmonic = false;
                 end
-                if Ea<90 % ?
+                if Ea<95 
                     high_energy = false;
                 end
-                if Le<513
-                    long = false;
-                end                                
-                %        
-                type = [];
-                if      high_energy && disordered && long
-                    type = 1;
-                elseif  high_energy && disordered && ~long
-                    type = 2';
-                elseif  high_energy && ~disordered && ~long
-                    type = 3;
-                elseif  high_energy && ~disordered && long
-                    type = 4;
-                elseif  ~high_energy && disordered && long
-                    type = 5;
-                elseif  ~high_energy && disordered && ~long
-                    type = 6;
-                elseif  ~high_energy && ~disordered && long
-                    type = 6; % NOT SATISFACTORY
-                elseif  ~high_energy && ~disordered && ~long
-                    type = 6; % NOT SATISFACTORY
-                end                
+                if Le>513
+                    extra_short = false;
+                end
                 %
-                % type = type + 6;
-                
+                type = 6;       % other
+                if extra_short && high_energy && ~harmonic
+                    type = 5;   % startle
+                elseif ~extra_short && ~harmonic
+                    type = 2;   % general
+                elseif harmonic && high_energy
+                    type = 3;   % head
+                end                               
+                %                
                 % 2) choose fv components                
                 switch mode
                     
