@@ -373,6 +373,8 @@ end
                 %
                 settings.annotators_delay = obj.annotators_delay;
                 settings.annotators_reaction = obj.annotators_reaction;                
+                %
+                settings.corr_map_W = obj.corr_map_W;                
             try
                 xml_write(fname,settings);
             catch
@@ -406,7 +408,9 @@ end
                 obj.ADC_sgm_SN = settings.ADC_sgm_SN;                                
                 %
                 obj.annotators_delay = settings.annotators_delay;
-                obj.annotators_reaction = settings.annotators_reaction;                                
+                obj.annotators_reaction = settings.annotators_reaction;
+                %
+                obj.corr_map_W = settings.corr_map_W;
              end
         end
 %-------------------------------------------------------------------------%
