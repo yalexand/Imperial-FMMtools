@@ -1226,15 +1226,6 @@ a_ranksum = 0.01;
                     extra_short = false;
                 end
                 %
-%                 type = 6;       % other
-%                 if extra_short && high_energy && ~harmonic
-%                     type = 5;   % startle
-%                 elseif ~extra_short && ~harmonic
-%                     type = 2;   % general
-%                 elseif harmonic && high_energy
-%                     type = 3;   % head
-%                 end                               
-
                 type = 10;       % T4
                 if extra_short && high_energy && ~harmonic
                     type = 7;    % T1
