@@ -275,6 +275,14 @@ function supervised_learning_type_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns supervised_learning_type contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from supervised_learning_type
+supervised_classification_go_Callback(hObject, eventdata, handles);
+% selectred groups may change
+dc = handles.data_controller;
+set(handles.pairwise_group_comparison_item1,'String',dc.groups_selected);
+set(handles.pairwise_group_comparison_item2,'String',dc.groups_selected);
+%
+setup_available_group_items(handles);
+clear_pairwise_comparison_visuals(handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -789,8 +797,13 @@ function visualize_unsupervised_clustering(handles)
     color_4 = [0 0 1];
     color_5 = [0 1 0];
     color_6 = [1 1 0];    
+    color_7 = [0.4 0.2 1];
+    color_8 = [0.87 0.65 0.34];
+    color_9 = [0 0 0];    
+    color_10 = [0.4 1 0.2];        
     
-    cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
+    
+    cmap = [color_1; color_2; color_3; color_4; color_5; color_6; color_7; color_8; color_9; color_10];
     IDX_color = cmap(IDX,:);
     %
     names = get(handles.unsupervised_clustering_vis_mode,'String');
@@ -829,13 +842,18 @@ function visualize_supervised_clustering(handles)
     color_4 = [0 0 1];
     color_5 = [0 1 0];
     color_6 = [1 1 0];    
+    color_7 = [0.4 0.2 1];
+    color_8 = [0.87 0.65 0.34];
+    color_9 = [0 0 0];    
+    color_10 = [0.4 1 0.2];        
     
 %     cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
 %     IDX_color = cmap(IDX,:);
 %     %
 %     scatter3(handles.supervised_classification_pane,v1,v2,v3,50,IDX_color,'filled','MarkerEdgeColor','white');
 
-    cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
+    %cmap = [color_1; color_2; color_3; color_4; color_5; color_6];
+    cmap = [color_1; color_2; color_3; color_4; color_5; color_6; color_7; color_8; color_9; color_10];
     IDX_color = cmap(IDX,:);
     %
     names = get(handles.supervised_clustering_vis_mode,'String');

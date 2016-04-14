@@ -34,8 +34,8 @@ classdef FMMtools_data_controller < handle
         ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
         ADC_fv_selected = {'entropy','energy'};
         % available "conditions", i.e. types of motion
-        groups_all = {'breathe','general','head','limb','startle','other'};
-        groups_available = {'breathe','general','head','limb','startle','other'};
+        groups_all = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4'};
+        groups_available = {'breathe','general','head','limb','startle','other','T1','T2','T3','T4'};
         groups_selected = {'breathe','general','startle'};
         %
         supervised_learning_method = {'Linear','Quadratic','kNN','PCA->Linear','PCA->Quadratic','PCA->kNN'};
@@ -410,7 +410,7 @@ end
                 obj.annotators_delay = settings.annotators_delay;
                 obj.annotators_reaction = settings.annotators_reaction;
                 %
-                obj.corr_map_W = settings.corr_map_W;
+                obj.corr_map_W = settings.corr_map_W; 
              end
         end
 %-------------------------------------------------------------------------%
@@ -1057,7 +1057,19 @@ a_ranksum = 0.01;
                         end
 
                         if ~isempty(hw), delete(hw), drawnow; end;           
-                   end        
+                   end  
+                   
+                    % set up available groups
+                    available_types_ind = unique(IDX);
+                    obj.groups_available = cell(1,length(available_types_ind));
+                    for k=1:numel(available_types_ind)
+                        obj.groups_available(k) = obj.groups_all(available_types_ind(k));
+                    end   
+                    
+                    % fix selected groups if needed
+                    if isempty(intersect(obj.groups_available,obj.groups_selected))
+                        obj.groups_selected = obj.groups_available;
+                    end                   
         end
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
@@ -1214,14 +1226,24 @@ a_ranksum = 0.01;
                     extra_short = false;
                 end
                 %
-                type = 6;       % other
+%                 type = 6;       % other
+%                 if extra_short && high_energy && ~harmonic
+%                     type = 5;   % startle
+%                 elseif ~extra_short && ~harmonic
+%                     type = 2;   % general
+%                 elseif harmonic && high_energy
+%                     type = 3;   % head
+%                 end                               
+
+                type = 10;       % T4
                 if extra_short && high_energy && ~harmonic
-                    type = 5;   % startle
+                    type = 7;    % T1
                 elseif ~extra_short && ~harmonic
-                    type = 2;   % general
+                    type = 8;    % T2
                 elseif harmonic && high_energy
-                    type = 3;   % head
+                    type = 9;    % T3
                 end                               
+
                 %                
                 % 2) choose fv components                
                 switch mode
@@ -1246,6 +1268,18 @@ a_ranksum = 0.01;
                         
             if ~isempty(hw), delete(hw), drawnow; end;           
 
+                    % set up available groups
+                    available_types_ind = unique(IDX);
+                    obj.groups_available = cell(1,length(available_types_ind));
+                    for k=1:numel(available_types_ind)
+                        obj.groups_available(k) = obj.groups_all(available_types_ind(k));
+                    end
+                    %
+                    % fix selected groups if needed
+                    if isempty(intersect(obj.groups_available,obj.groups_selected))
+                        obj.groups_selected = obj.groups_available;
+                    end
+            
         end
 %-------------------------------------------------------------------------%
         
