@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 08-Apr-2016 15:07:20
+% Last Modified by GUIDE v2.5 15-Apr-2016 12:06:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1306,4 +1306,17 @@ function exclude_strong_IMU_checkbox_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of exclude_strong_IMU_checkbox
 dc = handles.data_controller;
 dc.exclude_IMU = get(handles.exclude_strong_IMU_checkbox,'Value');
+
+
+
+% --------------------------------------------------------------------
+function start_ROI_inspector_Callback(hObject, eventdata, handles)
+% hObject    handle to start_ROI_inspector (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+dc = handles.data_controller;
+%if isempty(dc.ADC_trails_features_data), errordlg('no feature data found, please create some and come back..'), return, end;
+ROI_inspector(dc);
+
+
 

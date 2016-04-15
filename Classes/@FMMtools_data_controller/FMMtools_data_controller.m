@@ -906,14 +906,13 @@ end
             [~,record_length] = size(obj.ADC_trails_features_data);
             all_data = cell2mat(obj.ADC_trails_features_data(:,7:record_length)); % 7 is offset
             assert(size(all_data,2)==numel(obj.ADC_fv_all));
-            for m = 1:numel(obj.ADC_fv_all),            
+            for m = 1:numel(obj.ADC_fv_all),
                 for k = 1:numel(obj.ADC_fv_selected),
                     if strcmp(char(obj.ADC_fv_all(m)),char(obj.ADC_fv_selected(k)))
                         data = [data all_data(:,m)];
-                    end                
+                    end
                 end
-            end
-            
+            end            
         end
 %-------------------------------------------------------------------------% 
         function [X1,Y1,X2,Y2,z] = get_pairwise_comparison(obj,feature_vector_name,group1,group2,type,~)
@@ -1040,6 +1039,11 @@ a_ranksum = 0.01;
                         %
                         hw = waitbar(0,[ subj_name ' annotations - please wait']);
                         
+                        % array used in order not to re-assign ROI 
+                        % by next annotation after it was already
+                        % assigned by a previous one.. hope i get it right :)
+                        roi_assigned = zeros(length(t1)); 
+
                         for a=1:length(anno_t)
                         if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
                             for k = 1:length(t1)
@@ -1047,9 +1051,10 @@ a_ranksum = 0.01;
                                 if (subj_index_k == subj)
                                     T1 = anno_t(a) - d1 - d2;
                                     T2 = anno_t(a) - d1;
-                                    if T1 <= t1(k) && t1(k) <= T2
+                                    if T1 <= t1(k) && t1(k) <= T2 && ~roi_assigned(k)
                                         IDX = [IDX; anno(a)];
                                         data = [data; fv_data(k,:)];
+                                        roi_assigned(k) = true;
                                         break;
                                     end
                                 end                                
@@ -1069,7 +1074,7 @@ a_ranksum = 0.01;
                     % fix selected groups if needed
                     if isempty(intersect(obj.groups_available,obj.groups_selected))
                         obj.groups_selected = obj.groups_available;
-                    end                   
+                    end  
         end
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
