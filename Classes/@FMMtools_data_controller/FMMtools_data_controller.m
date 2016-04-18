@@ -625,7 +625,7 @@ end
                     SGM = SGM | obj.current_ADC_segmented(:,k);
                 end
                 %
-                norm_meas = zeros(1,num_ADC_channels);
+                norm_meas = inf(1,num_ADC_channels);
                 %
                 num_ADC_channels = size(obj.current_data.ADC,2);
                 
@@ -643,9 +643,7 @@ end
                     %    
                     if 0~=sum(s) && 0~= sum(squeeze(obj.current_ADC_segmented(:,k)))
                         fl = abs(s(~SGM));
-                        fl_t = quantile(fl(:),0.10);
-                        fl = fl(fl<fl_t); % get the weakest 10% part
-                        norm_meas(k) = median(fl(:)); % normalize by its median
+                        norm_meas(k) = median(fl(:)); % norma == the median of segmentation-rejecetd part of record
                     end
                 end
                 %
