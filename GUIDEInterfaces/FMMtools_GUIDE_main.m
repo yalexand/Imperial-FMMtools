@@ -1315,7 +1315,7 @@ function start_ROI_inspector_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
-%if isempty(dc.ADC_trails_features_data), errordlg('no feature data found, please create some and come back..'), return, end;
+if isempty(dc.ADC_trails_features_data), errordlg('no feature data found, please create some and come back..'), return, end;
 ROI_inspector(dc);
 
 

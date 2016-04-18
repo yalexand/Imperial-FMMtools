@@ -22,7 +22,7 @@ function varargout = ROI_inspector(varargin)
 
 % Edit the above text to modify the response to help ROI_inspector
 
-% Last Modified by GUIDE v2.5 15-Apr-2016 12:32:44
+% Last Modified by GUIDE v2.5 18-Apr-2016 15:23:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,35 +56,13 @@ data_controller = varargin{1};
 handles.data_controller = data_controller;
 
 INDEX = 1;
-
 handles.INDEX = INDEX;
-
-% display_current_ROI(handles);
-
-data = data_controller.ADC_trails_features_data(INDEX,:)';
-handles.INDEX = INDEX;
-%
-set(handles.features_table, 'Data',data);
-set(handles.features_table, 'RowName', data_controller.ADC_feature_names); % must be dc_groups_selected
-%
-subj_ind = cell2mat(data(2));
-detector_ind = cell2mat(data(3));
-t1 = cell2mat(data(5));
-t2 = cell2mat(data(6));
-l1 = fix(t1*data_controller.Fs_ADC);
-if 0==l1, l1=1; end;
-l2 = fix(t2*data_controller.Fs_ADC);
-%
-subj_data = data_controller.subj_data(subj_ind);
-signal = subj_data.ADC_pre_processed(:,detector_ind);
-%
-plot_mode = 'ko-';
-plot(handles.signal_axes,(l1:l2)/data_controller.Fs_ADC,signal(l1:l2)',plot_mode);
-grid(handles.signal_axes,'on');
 
 set(handles.ROI_index_slider,'Min',1);
 set(handles.ROI_index_slider,'Max',size(data_controller.ADC_trails_features_data,1));
 set(handles.ROI_index_slider,'Value',1);
+
+display_current_ROI(handles);
 
 % Choose default command line output for ROI_inspector
 handles.output = hObject;
@@ -153,15 +131,41 @@ subj_ind = cell2mat(data(2));
 detector_ind = cell2mat(data(3));
 t1 = cell2mat(data(5));
 t2 = cell2mat(data(6));
-l1 = fix(t1*dc.Fs_ADC);
+l1 = fix(t1*dc.Fs_ADC); 
+    if 0==l1, l1=1; end;
 l2 = fix(t2*dc.Fs_ADC);
 %
 subj_data = dc.subj_data(subj_ind);
-signal = subj_data.ADC_pre_processed(:,detector_ind);
 %
-plot_mode = 'ko-';
-plot(handles.signal_axes,(l1:l2)/dc.Fs_ADC,signal(l1:l2)',plot_mode);
+t = (l1:l2)/dc.Fs_ADC;
+minT = min(t(:));
+maxT = max(t(:));
+
+cla(handles.signal_axes,'reset');
+
+minY = Inf;
+maxY = -Inf;
+%
+hold(handles.signal_axes,'on');
+for k = 1 : 8
+        signal = subj_data.ADC_pre_processed(:,k); 
+        S = signal(l1:l2)';
+        
+        if k == detector_ind
+            plot(handles.signal_axes,t,S,'k.-','LineWidth',2);
+        else
+            plot(handles.signal_axes,t,S);
+        end
+        
+        minYk = min(S(:));
+        maxYk = max(S(:));
+        if minYk < minY && 0~=minYk, minY = minYk; end;
+        if maxYk > maxY, maxY = maxYk; end;
+end
+hold(handles.signal_axes,'off');
+%
+set(handles.signal_axes,'XLim',[minT maxT]);
+set(handles.signal_axes,'YLim',[minY maxY]);        
+%
 grid(handles.signal_axes,'on');
-
-
-
+legend(handles.signal_axes,{'1','2','3','4','5','6','7','8'});
