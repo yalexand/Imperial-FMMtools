@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 15-Apr-2016 12:06:50
+% Last Modified by GUIDE v2.5 19-Apr-2016 15:26:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1319,4 +1319,16 @@ if isempty(dc.ADC_trails_features_data), errordlg('no feature data found, please
 ROI_inspector(dc);
 
 
+% --- Executes on button press in ROI_inspector_pushbutton.
+function ROI_inspector_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to ROI_inspector_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+start_ROI_inspector_Callback(hObject, eventdata, handles);
 
+
+% --------------------------------------------------------------------
+function tools_Callback(hObject, eventdata, handles)
+% hObject    handle to tools (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

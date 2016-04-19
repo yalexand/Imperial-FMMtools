@@ -1,4 +1,4 @@
-
+ 
 classdef FMMtools_data_controller < handle 
     
     % Copyright (C) 2013 Imperial College London.
@@ -86,7 +86,7 @@ classdef FMMtools_data_controller < handle
         ADC_prprss_notch_comb_fb = 39.1328; % base frequency, Hz
         ADC_prprss_notch_comb_bw = 0.0022; % bandwidth        
         %
-        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding'};
+        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotation based'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
         %
@@ -185,7 +185,7 @@ classdef FMMtools_data_controller < handle
             %
             obj.pre_process_ADC(prp_type);
             obj.segment_ADC(sgm_type);
-            obj.pre_process_IMU([]); % that should be done better (?) - for now returns zeros
+            obj.pre_process_IMU([]);
             obj.segment_IMU([]);
             obj.calculate_PSDs;
             %
@@ -457,13 +457,60 @@ end
             
             if isempty(obj.current_ADC_pre_processed), return, end;
 
+           % extract annotation
+            US_data = [];
+            %curate
+            for k = 1:size(obj.current_data.US,1)
+                rec = obj.current_data.US(k,:);
+                if ~isempty(cell2mat(rec(1)))
+                    US_data = [US_data; rec];
+                end
+            end
+
+            event_times = US_data(:,1);
+            
+            % unfortunately "types" index can be 2 or 3..
+            event_type_ind = 3;
+            tokens = unique(US_data(:,2)); % check if it is 2
+            %
+            if  ~isempty(intersect(tokens,{'b','g','h','l','s'})) || ...
+                ~isempty(intersect(tokens,{'B','G','H','L','S'}))
+               event_type_ind = 2;
+            end
+            
+            event_types = US_data(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
+            obj.current_annotation = zeros(size(event_times,1),1);
+            obj.current_annotation_time = zeros(size(event_times,1),1);            
+            %
+            type_ind = 0; % for now...
+            %
+            for k = 1:length(event_times)
+                obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
+                switch char(event_types(k,1))
+                    case {'b' 'B'}
+                        type_ind = 1;                        
+                    case {'g' 'G'}
+                        type_ind = 2;
+                    case {'h' 'H'}
+                        type_ind = 3;
+                    case {'l' 'L'}
+                        type_ind = 4;
+                    case {'s' 'S'}
+                        type_ind = 5;
+                    otherwise
+                        type_ind = 6; % ehm..
+                end
+                obj.current_annotation(k,1) = type_ind;
+            end
+            % extract annotation - ends            
+            
             obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));
                                
 %debug_h = figure();
             num_ADC_channels = size(obj.current_data.ADC,2);
 
             hw = waitbar(0,[type ' segmenting ADC - please wait']);            
-            if strcmp(type,'moving average subtraction + thresholding')            
+            if strcmp(type,'moving average subtraction + thresholding') || strcmp(type,'annotation based')            
 
                 for k = 1 : num_ADC_channels
                     if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
@@ -552,59 +599,35 @@ end
                             else
                                 obj.current_ADC_segmented(:,k) = zeros(size(z));
                             end
-                        end                                        
+                        end   
             end
-            
-            % extract annotation
-            US_data = [];
-            %curate
-            for k = 1:size(obj.current_data.US,1)
-                rec = obj.current_data.US(k,:);
-                if ~isempty(cell2mat(rec(1)))
-                    US_data = [US_data; rec];
+            %
+            if strcmp(type,'annotation based') % undo segmentations
+                % same for all
+                SGM = zeros(1,size(obj.current_ADC_segmented,1));
+                                
+                for k = 1:length(obj.current_annotation_time)
+                    t0 = obj.current_annotation_time(k,1);
+                    anno = obj.current_annotation(k,1);
+                    if 2==anno || 5==anno % startle or general
+                        lmin = fix((t0-3)*obj.Fs_ADC);
+                        lmax = fix((t0+1)*obj.Fs_ADC);
+                        if lmin>=1 && lmax<=length(SGM)  && 0==sum(SGM(lmin:lmax))
+                            SGM(lmin:lmax)=1;
+                        end
+                    end
                 end
-            end
-
-            event_times = US_data(:,1);
-            
-            % unfortunately "types" index can be 2 or 3..
-            event_type_ind = 3;
-            tokens = unique(US_data(:,2)); % check if it is 2
-            %
-            if  ~isempty(intersect(tokens,{'b','g','h','l','s'})) || ...
-                ~isempty(intersect(tokens,{'B','G','H','L','S'}))
-               event_type_ind = 2;
-            end
-            
-            event_types = US_data(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
-            obj.current_annotation = zeros(size(event_times,1),1);
-            obj.current_annotation_time = zeros(size(event_times,1),1);            
-            if ~isempty(hw), delete(hw), drawnow; end;
-            %
-            type_ind = 0; % for now...
-            %
-            for k = 1:length(event_times)
-                obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
-                switch char(event_types(k,1))
-                    case {'b' 'B'}
-                        type_ind = 1;                        
-                    case {'g' 'G'}
-                        type_ind = 2;
-                    case {'h' 'H'}
-                        type_ind = 3;
-                    case {'l' 'L'}
-                        type_ind = 4;
-                    case {'s' 'S'}
-                        type_ind = 5;
-                    otherwise
-                        type_ind = 6; % ehm..
-                end
-                obj.current_annotation(k,1) = type_ind;
-            end
-            % extract annotation - ends
+                % same for all
+                for k = 1 : num_ADC_channels% same for all
+                    if 0~=sum(obj.current_ADC_segmented(:,k));
+                        obj.current_ADC_segmented(:,k) = SGM;
+                    end
+                end                                                                 
+                % same for all
+            end            
+            if ~isempty(hw), delete(hw), drawnow; end;            
             %            
-        end
-        
+        end        
 %-------------------------------------------------------------------------%        
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
 
@@ -869,7 +892,7 @@ end
                 [data,IDX] = obj.get_annotators_categorized_data('selected components');
                 
                 case 'annotator"s only'
-                    % to do 
+                    [data,IDX] = obj.get_annotators_ONLY_categorized_data('selected components'); 
                 case 'auto annotated'
                     [data,IDX] = obj.get_auto_categorized_data('selected components');
                     
@@ -930,11 +953,11 @@ end
                 
                 case 'annotator"s + segmentation'
 
-                % data composed with selected featue vector but NOT filtered re selected groups    
-                [data,IDX] = obj.get_annotators_categorized_data('all components');
+                    % data composed with selected featue vector but NOT filtered re selected groups    
+                    [data,IDX] = obj.get_annotators_categorized_data('all components');
                 
                 case 'annotator"s only'
-                    % to do 
+                    [data,IDX] = obj.get_annotators_ONLY_categorized_data('all components');
                 case 'auto annotated'
                     [data,IDX] = obj.get_auto_categorized_data('all components');
                     
@@ -1073,7 +1096,62 @@ a_ranksum = 0.01;
                     if isempty(intersect(obj.groups_available,obj.groups_selected))
                         obj.groups_selected = obj.groups_available;
                     end  
-        end
+        end                                        
+%-------------------------------------------------------------------------%        
+       function [data,IDX] = get_annotators_ONLY_categorized_data(obj,mode,~)
+            % data composed with selected featue vector but NOT filtered re selected groups    
+            switch mode
+                case 'selected components'
+                    fv_data = obj.get_selected_feature_vector_data;            
+                case 'all components'
+                    fv_temp = obj.ADC_fv_selected;
+                    obj.ADC_fv_selected = obj.ADC_fv_all;
+                    fv_data = obj.get_selected_feature_vector_data;
+                    obj.ADC_fv_selected = fv_temp;
+            end
+            
+            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
+            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
+            data = [];
+            IDX = [];  
+                    
+                   for subj = 1:numel(obj.subj_data)
+                        anno = obj.subj_data(subj).annotation;
+                        anno_t = obj.subj_data(subj).annotation_time; 
+                        subj_name = obj.subj_data(subj).filename;
+                        %
+                        hw = waitbar(0,[ subj_name ' annotations - please wait']);
+                        
+                        for a=1:length(anno_t)
+                        if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
+                            for k = 1:length(t1)
+                                subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
+                                if (subj_index_k == subj)
+                                    Ta = anno_t(a);
+                                    if t1(k) <= Ta && Ta <= t2(k) % simply if inside..
+                                        IDX = [IDX; anno(a)];
+                                        data = [data; fv_data(k,:)];
+                                        break;
+                                    end
+                                end                                
+                            end
+                        end
+
+                        if ~isempty(hw), delete(hw), drawnow; end;           
+                   end  
+                   
+                    % set up available groups
+                    available_types_ind = unique(IDX);
+                    obj.groups_available = cell(1,length(available_types_ind));
+                    for k=1:numel(available_types_ind)
+                        obj.groups_available(k) = obj.groups_all(available_types_ind(k));
+                    end   
+                    
+                    % fix selected groups if needed
+                    if isempty(intersect(obj.groups_available,obj.groups_selected))
+                        obj.groups_selected = obj.groups_available;
+                    end  
+        end        
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
         % NB - this function presumes that both ADC and IMU
@@ -1115,7 +1193,7 @@ a_ranksum = 0.01;
                         % data composed with selected featue vector but NOT filtered re selected groups    
                         [data,IDX1] = obj.get_annotators_categorized_data('selected components');                                                                                                
                     case 'annotator"s only'
-                        % to do 
+                        [data,IDX1] = obj.get_annotators_ONLY_categorized_data('selected components');
                     case 'auto annotated'                        
                         [data,IDX1] = obj.get_auto_categorized_data('selected components');                        
                     otherwise                    
