@@ -617,6 +617,27 @@ end
                         end
                     end
                 end
+                
+                %
+                % the idea is to reject ROI if it doesn't contain enough
+                % signal
+                sgmntd_sgnls = zeros(size(SGM));
+                for k = 1 : num_ADC_channels% same for all
+                    sgmntd_sgnls = sgmntd_sgnls | obj.current_ADC_segmented(:,k)';
+                end                                                                 
+                %
+                Rt = 0.15;
+                %
+                SGM_lab = bwlabel(SGM);
+                for l=1:max(SGM_lab)
+                    z = (SGM_lab==l);
+                    ratio = sum(z & sgmntd_sgnls)/sum(z);
+                    if ratio > Rt;
+                        SGM = SGM &~ z;
+                    end
+                end                
+                %
+                
                 % same for all
                 for k = 1 : num_ADC_channels% same for all
                     if 0~=sum(obj.current_ADC_segmented(:,k));
