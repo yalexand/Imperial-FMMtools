@@ -86,12 +86,12 @@ classdef FMMtools_data_controller < handle
         ADC_prprss_notch_comb_fb = 39.1328; % base frequency, Hz
         ADC_prprss_notch_comb_bw = 0.0022; % bandwidth        
         %
-        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotation based'};
+        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotator"s general/startle '};
         ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
         %
         supervised_learning_types = {'annotator"s + segmentation', ...
-                                            'annotator"s only', ...
+                                            'annotator"s general/startle ', ...
                                             'auto annotated'};
         %
         exclude_IMU = true;
@@ -510,7 +510,7 @@ end
             num_ADC_channels = size(obj.current_data.ADC,2);
 
             hw = waitbar(0,[type ' segmenting ADC - please wait']);            
-            if strcmp(type,'moving average subtraction + thresholding') || strcmp(type,'annotation based')            
+            if strcmp(type,'moving average subtraction + thresholding') || strcmp(type,'annotator"s general/startle ')            
 
                 for k = 1 : num_ADC_channels
                     if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
@@ -602,14 +602,14 @@ end
                         end   
             end
             %
-            if strcmp(type,'annotation based') % undo segmentations
+            if strcmp(type,'annotator"s general/startle ') % undo segmentations
                 % same for all
                 SGM = zeros(1,size(obj.current_ADC_segmented,1));
                                 
                 for k = 1:length(obj.current_annotation_time)
                     t0 = obj.current_annotation_time(k,1);
                     anno = obj.current_annotation(k,1);
-                    if 2==anno || 5==anno % startle or general
+                    if 2==anno || 5==anno % or startle or general
                         lmin = fix((t0-3)*obj.Fs_ADC);
                         lmax = fix((t0+1)*obj.Fs_ADC);
                         if lmin>=1 && lmax<=length(SGM)  && 0==sum(SGM(lmin:lmax))
@@ -624,6 +624,10 @@ end
                     end
                 end                                                                 
                 % same for all
+                
+                % is it OK here?
+                obj.groups_available = {'general','startle'};
+                obj.groups_selected = {'general','startle'};
             end            
             if ~isempty(hw), delete(hw), drawnow; end;            
             %            
@@ -891,7 +895,7 @@ end
                 % data composed with selected featue vector but NOT filtered re selected groups    
                 [data,IDX] = obj.get_annotators_categorized_data('selected components');
                 
-                case 'annotator"s only'
+                case 'annotator"s general/startle '
                     [data,IDX] = obj.get_annotators_ONLY_categorized_data('selected components'); 
                 case 'auto annotated'
                     [data,IDX] = obj.get_auto_categorized_data('selected components');
@@ -956,7 +960,7 @@ end
                     % data composed with selected featue vector but NOT filtered re selected groups    
                     [data,IDX] = obj.get_annotators_categorized_data('all components');
                 
-                case 'annotator"s only'
+                case 'annotator"s general/startle '
                     [data,IDX] = obj.get_annotators_ONLY_categorized_data('all components');
                 case 'auto annotated'
                     [data,IDX] = obj.get_auto_categorized_data('all components');
@@ -1128,7 +1132,8 @@ a_ranksum = 0.01;
                                 subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
                                 if (subj_index_k == subj)
                                     Ta = anno_t(a);
-                                    if t1(k) <= Ta && Ta <= t2(k) % simply if inside..
+                                    A = anno(a);
+                                    if t1(k) <= Ta && Ta <= t2(k) && 0~=sum(A==[2 5]) % if inside interval AND (general OR startle)
                                         IDX = [IDX; anno(a)];
                                         data = [data; fv_data(k,:)];
                                         break;
@@ -1192,7 +1197,7 @@ a_ranksum = 0.01;
                     case 'annotator"s + segmentation'
                         % data composed with selected featue vector but NOT filtered re selected groups    
                         [data,IDX1] = obj.get_annotators_categorized_data('selected components');                                                                                                
-                    case 'annotator"s only'
+                    case 'annotator"s general/startle '
                         [data,IDX1] = obj.get_annotators_ONLY_categorized_data('selected components');
                     case 'auto annotated'                        
                         [data,IDX1] = obj.get_auto_categorized_data('selected components');                        

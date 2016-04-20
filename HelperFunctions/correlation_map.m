@@ -6,10 +6,17 @@ function corrmap = correlation_map( u1,u2,W )
     %H = round(W/gs);
     H = W;
     corrmap = zeros(W,H);
-
+        
     u1_scaled = map(u1,1,W);
     u2_scaled = map(u2,1,H);
-
+    
+    if 0~=sum(isnan(u1_scaled))
+        u1_scaled = ones(size(u1_scaled));
+    end
+    if 0~=sum(isnan(u2_scaled))
+        u2_scaled = ones(size(u2_scaled));
+    end
+    
     sizeX=size(u1);
     for x=1:sizeX
         u1_coord = fix(u1_scaled(x));

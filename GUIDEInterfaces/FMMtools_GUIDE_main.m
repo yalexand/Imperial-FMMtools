@@ -80,6 +80,9 @@ set(handles.confusion_matrix, 'ColumnName', data_controller.groups_all);
 
 set(handles.supervised_classification_type, 'String', data_controller.supervised_learning_method);
 
+set(handles.corrX_chooser,'String',data_controller.ADC_fv_all);
+set(handles.corrY_chooser,'String',data_controller.ADC_fv_all);
+
 % Choose default command line output for FMMtools_GUIDE_main
 handles.output = hObject;
 
@@ -1162,7 +1165,13 @@ group1 = str(get(handles.pairwise_group_comparison_item1,'Value'));
 str = get(handles.pairwise_group_comparison_item2,'String');
 group2 = str(get(handles.pairwise_group_comparison_item2,'Value'));
 %
+try
 [X1,Y1,X2,Y2,z] = dc.get_pairwise_comparison(feature_vector_name,group1,group2,type);
+catch
+    errordlg('can not plot - groups may be not chosen properly');
+    clear_pairwise_comparison_visuals(handles);
+    return;
+end
 if isempty(z), clear_pairwise_comparison_visuals(handles), return, end;
 
 g1_plot_mode = 'c.-';
