@@ -77,6 +77,7 @@ set(handles.exclude_strong_IMU_checkbox,'Value',data_controller.exclude_IMU);
 set(handles.confusion_matrix, 'Data', zeros(6));
 set(handles.confusion_matrix, 'RowName', data_controller.groups_all);
 set(handles.confusion_matrix, 'ColumnName', data_controller.groups_all);
+set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']);
 
 set(handles.supervised_classification_type, 'String', data_controller.supervised_learning_method);
 
@@ -885,6 +886,7 @@ function setup_available_group_items(handles)
     set(handles.confusion_matrix, 'Data', zeros(numel(dc.groups_selected)));
     set(handles.confusion_matrix, 'RowName', dc.groups_selected);
     set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);
+    set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']);    
 %-------------------------------------------------------------------------%      
     function clear_pairwise_comparison_visuals(handles)               
     cla(handles.pairwise_group_comparison_axes,'reset');
@@ -1279,7 +1281,8 @@ anno_type = char(anno_types(get(handles.supervised_learning_type,'Value')));
 if ~isempty(CM)
     set(handles.confusion_matrix, 'Data',CM);
     set(handles.confusion_matrix, 'RowName', dc.groups_all(groups)); % must be dc_groups_selected
-    set(handles.confusion_matrix, 'ColumnName', dc.groups_all(groups));    
+    set(handles.confusion_matrix, 'ColumnName', dc.groups_all(groups));
+    set(handles.diagonal_strength_text, 'String',['diagonal strength ' num2str(sum(diag(CM/sum(CM(:)))))]);
 end
 
 % --- Executes on selection change in pairwise_comparison_stats.
