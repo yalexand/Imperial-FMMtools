@@ -1099,6 +1099,10 @@ function select_fv_components_pushbutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 dc = handles.data_controller;
 feature_vector_components_chooser(dc,hObject, eventdata, handles);
+    set(handles.confusion_matrix, 'Data', zeros(numel(dc.groups_selected)));
+    set(handles.confusion_matrix, 'RowName', dc.groups_selected);
+    set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);
+    set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']);  
 
 % --------------------------------------------------------------------
 function save_training_data_Callback(hObject, eventdata, handles)
