@@ -88,7 +88,7 @@ classdef FMMtools_data_controller < handle
         %
         segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotator"s general/startle '};
         ADC_segm_Moving_Average_Window = 5; % seconds!
-        ADC_segm_Minimal_Trail_Duration = 0.25;  %seconds       
+        ADC_segm_Minimal_Trail_Duration = 1.3;  %seconds       
         %
         supervised_learning_types = {'annotator"s + segmentation', ...
                                             'annotator"s general/startle ', ...
@@ -534,13 +534,14 @@ end
 %figure(debug_h);subplot(2,4,k);plot(1:length(s_),s_,'k.-',1:length(s_),t*ones(1,length(s_)),'r-');grid on;xlabel(num2str(t));                    
                         %
                         if 0~=sum(z)
-                            min_size = round(obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC); % sic!
+                            min_size = obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC;
                             %
                             SE = strel('line',min_size,90);
-                            z = imdilate(z,SE);
+                            z = imdilate(z,SE);                            
                         end
                         obj.current_ADC_segmented(:,k) = z;
                 end
+                                               
             elseif strcmp(type,'ICA assisted thresholding') 
                 mixedsig = [];        
                 for k = 1 : num_ADC_channels
@@ -650,8 +651,18 @@ end
                 obj.groups_available = {'general','startle'};
                 obj.groups_selected = {'general','startle'};
             end            
-            if ~isempty(hw), delete(hw), drawnow; end;            
+            if ~isempty(hw), delete(hw), drawnow; end;
             %            
+            
+                % one segmentation for all - for debugging
+%                 SGM = obj.current_ADC_segmented(:,1);
+%                 for k = 2 : num_ADC_channels
+%                     SGM = SGM | obj.current_ADC_segmented(:,k);
+%                 end
+%                 SGM_lab = bwlabel(SGM);
+%                 N_segmented = max(SGM_lab);
+%                 N_annotated = length(obj.current_annotation);
+%                 disp([N_annotated N_segmented]);                        
         end        
 %-------------------------------------------------------------------------%        
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
@@ -1077,36 +1088,40 @@ a_ranksum = 0.01;
                     
             d2 = obj.annotators_delay;
             d1 = obj.annotators_reaction; % [second] - minimal discernable time between event and annotation
-
+            
+                   % array used in order not to re-assign ROI 
+                   % by next annotation after it was already
+                   % assigned by a previous one.. hope i get it right :)
+                   roi_assigned = zeros(length(t1));             
+            
                    for subj = 1:numel(obj.subj_data)
                         anno = obj.subj_data(subj).annotation;
                         anno_t = obj.subj_data(subj).annotation_time; 
                         subj_name = obj.subj_data(subj).filename;
                         %
                         hw = waitbar(0,[ subj_name ' annotations - please wait']);
-                        
-                        % array used in order not to re-assign ROI 
-                        % by next annotation after it was already
-                        % assigned by a previous one.. hope i get it right :)
-                        roi_assigned = zeros(length(t1)); 
-
+                                               
                         for a=1:length(anno_t)
+                        A = anno(a);    
                         if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
                             for k = 1:length(t1)
                                 subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
                                 if (subj_index_k == subj)
                                     T1 = anno_t(a) - d1 - d2;
                                     T2 = anno_t(a) - d1;
-                                    if T1 <= t1(k) && t1(k) <= T2 && ~roi_assigned(k)
-                                        IDX = [IDX; anno(a)];
+                                    t_ = (t1(k)+t2(k))/2;
+                                    if T1 <= t_ && t_ <= T2 && ~roi_assigned(k) && 0~=sum(A==[2 5])
+                                    % if T1 <= t_ && t_ <= T2 && ~roi_assigned(k)
+                                        IDX = [IDX; A];
                                         data = [data; fv_data(k,:)];
                                         roi_assigned(k) = true;
+                                        %disp([k a anno(a)]);
                                         break;
                                     end
                                 end                                
                             end
-                        end
-
+                        end                        
+                                                                        
                         if ~isempty(hw), delete(hw), drawnow; end;           
                    end  
                    
