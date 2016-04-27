@@ -47,7 +47,8 @@ classdef FMMtools_data_controller < handle
     properties(Transient)
         
         DefaultDirectory = ['C:' filesep];
-        RootDirectory = ['C:' filesep];       
+        RootDirectory = ['C:' filesep]; 
+        ExcelDirectory = [];
                 
         current_filename = [];
         
@@ -88,7 +89,7 @@ classdef FMMtools_data_controller < handle
         %
         segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotator"s general/startle '};
         ADC_segm_Moving_Average_Window = 5; % seconds!
-        ADC_segm_Minimal_Trail_Duration = 1.3;  %seconds       
+        ADC_segm_Minimal_Trail_Duration = 1.2;  %seconds       
         %
         supervised_learning_types = {'annotator"s + segmentation', ...
                                             'annotator"s general/startle ', ...
@@ -102,7 +103,7 @@ classdef FMMtools_data_controller < handle
         %
         ADC_sgm_low_signal_quantile = 0.1;
         ADC_sgm_signal_cutoff = 0.004; % weaker signals rejected
-        ADC_sgm_SN = 100; % signal-to-noise
+        ADC_sgm_SN = 150; % signal-to-noise
         %
         annotators_delay = 2; % seconds
         annotators_reaction = 0.4; % seconds
@@ -132,6 +133,29 @@ classdef FMMtools_data_controller < handle
                     
             obj.RootDirectory = pwd;   
             
+           if isempty(obj.ExcelDirectory)
+                hw = waitbar(0,'looking for Excel directory..');
+                waitbar(0.1,hw);                
+                if ispc
+                       prevdir = pwd;
+                       cd('c:\');
+                       [~,b] = dos('dir /s /b excel.exe');
+                       if ~strcmp(b,'File Not Found')
+                            filenames = textscan(b,'%s','delimiter',char(10));
+                            s = char(filenames{1});
+                            s = s(1,:);
+                            s = strsplit(s,'excel.exe');
+                            obj.ExcelDirectory = s{1};
+                       end
+                       cd(prevdir);
+                elseif ismac
+                    % to do
+                else
+                    % to do
+                end                
+                delete(hw); drawnow;                               
+            end            
+                        
         end
                 
 %-------------------------------------------------------------------------%
@@ -374,7 +398,9 @@ end
                 settings.annotators_delay = obj.annotators_delay;
                 settings.annotators_reaction = obj.annotators_reaction;                
                 %
-                settings.corr_map_W = obj.corr_map_W;                
+                settings.corr_map_W = obj.corr_map_W; 
+                %
+                settings.ExcelDirectory = obj.ExcelDirectory;
             try
                 xml_write(fname,settings);
             catch
@@ -411,6 +437,8 @@ end
                 obj.annotators_reaction = settings.annotators_reaction;
                 %
                 obj.corr_map_W = settings.corr_map_W; 
+                %
+                obj.ExcelDirectory = settings.ExcelDirectory;
              end
         end
 %-------------------------------------------------------------------------%
@@ -484,6 +512,8 @@ end
             %
             type_ind = 0; % for now...
             %
+cnt = zeros(1,6);
+            %
             for k = 1:length(event_times)
                 obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
                 switch char(event_types(k,1))
@@ -501,7 +531,9 @@ end
                         type_ind = 6; % ehm..
                 end
                 obj.current_annotation(k,1) = type_ind;
-            end
+cnt(type_ind) = cnt(type_ind)+1;
+            end            
+            %
             % extract annotation - ends            
             
             obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));
@@ -655,14 +687,20 @@ end
             %            
             
                 % one segmentation for all - for debugging
-%                 SGM = obj.current_ADC_segmented(:,1);
-%                 for k = 2 : num_ADC_channels
-%                     SGM = SGM | obj.current_ADC_segmented(:,k);
-%                 end
-%                 SGM_lab = bwlabel(SGM);
-%                 N_segmented = max(SGM_lab);
-%                 N_annotated = length(obj.current_annotation);
-%                 disp([N_annotated N_segmented]);                        
+                SGM = obj.current_ADC_segmented(:,1);
+                for k = 2 : num_ADC_channels
+                    SGM = SGM | obj.current_ADC_segmented(:,k);
+                end
+                SGM_lab = bwlabel(SGM);
+                N_segmented = max(SGM_lab);
+                N_annotated = length(obj.current_annotation);
+                
+                str = obj.current_filename;
+                str = strrep(str,'SUBJECT_','');
+                str = strrep(str,'.mat','');
+                subj_num = str2num(str);                                
+                disp([subj_num N_annotated N_segmented cnt]);                 
+                
         end        
 %-------------------------------------------------------------------------%        
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
@@ -777,7 +815,7 @@ end
                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
             %        
-            trails_features = [fnames num2cell(feats)];
+            trails_features = [fnames num2cell(feats)];            
 
         end
 %-------------------------------------------------------------------------%                

@@ -22,7 +22,7 @@ function varargout = FMMtools_GUIDE_main(varargin)
 
 % Edit the above text to modify the response to help FMMtools_GUIDE_main
 
-% Last Modified by GUIDE v2.5 19-Apr-2016 15:26:11
+% Last Modified by GUIDE v2.5 27-Apr-2016 12:31:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1348,3 +1348,21 @@ function tools_Callback(hObject, eventdata, handles)
 % hObject    handle to tools (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function view_subject_statistics_Callback(hObject, eventdata, handles)
+% hObject    handle to view_subject_statistics (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+dc = handles.data_controller;
+stats = dc.get_subject_feature_stats;
+if isempty(stats), errordlg('no data'), return, end;
+%
+fname = [tempname '.xls'];
+xlswrite(fname,stats);
+old_dir = pwd;
+directory = strrep(dc.ExcelDirectory,'EXCEL.EXE','');
+cd(directory);
+system(['excel ' fname]);
+cd(old_dir);
