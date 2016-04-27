@@ -9,6 +9,15 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 if ~isempty(hw), waitbar(subj_ind/length(obj.subj_filenames),hw); drawnow, end;
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
 
+                anno = obj.subj_data(subj_ind).annotation;
+                anno_t = obj.subj_data(subj_ind).annotation_time; 
+                N_annotated = length(anno);
+                %
+                cnt = zeros(1,6);
+                for k =1:length(anno)
+                    cnt(anno(k)) = cnt(anno(k))+1;
+                end
+                %
                 num_ADC_channels = size(obj.current_data.ADC,2);        
                 %
                 % one segmentation for all
@@ -19,9 +28,10 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 z_lab = bwlabel(SGM);
                 tot_num_ROIs = max(z_lab);
                 tot_time_ROIs = sum(0~=z_lab)/obj.Fs_ADC;
+                tot_time = length(z_lab)/obj.Fs_ADC;
                 %
                 % params stats
-                params_data = [cellstr(obj.current_filename) num2cell([tot_num_ROIs tot_time_ROIs])];
+                params_data = [cellstr(obj.current_filename) num2cell([tot_time tot_time_ROIs tot_num_ROIs N_annotated cnt ])];
                 subj_indices = cell2mat(obj.ADC_trails_features_data(:,2));
                 for k = 7:19
                     param = obj.ADC_trails_features_data(:,k);
