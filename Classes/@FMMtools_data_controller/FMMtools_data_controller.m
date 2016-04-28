@@ -800,7 +800,7 @@ cnt(type_ind) = cnt(type_ind)+1;
                         if 0~=sum(isinf(prm)) || 0~=sum(isnan(prm))
                             disp(prm);
                         else
-                            feats_subj = [feats_subj; [subj_ind k_ l t1 t2 length(s_l) p1 p2 p3 ... 
+                            feats_subj = [feats_subj; [subj_ind k_ l t1 t2 length(s_l)/obj.Fs_ADC p1 p2 p3 ... 
                                 R1 R2 R3 ... 
                                 p4]];
                             fnames_subj = [fnames_subj; cellstr(obj.current_filename)];
@@ -1148,8 +1148,8 @@ a_ranksum = 0.01;
                                     T1 = anno_t(a) - d1 - d2;
                                     T2 = anno_t(a) - d1;
                                     t_ = (t1(k)+t2(k))/2;
-                                    if T1 <= t_ && t_ <= T2 && ~roi_assigned(k) && 0~=sum(A==[2 5])
-                                    % if T1 <= t_ && t_ <= T2 && ~roi_assigned(k)
+                                    %if T1 <= t_ && t_ <= T2 && ~roi_assigned(k) && 0~=sum(A==[2 5])
+                                    if T1 <= t_ && t_ <= T2 && ~roi_assigned(k)
                                         IDX = [IDX; A];
                                         data = [data; fv_data(k,:)];
                                         roi_assigned(k) = true;

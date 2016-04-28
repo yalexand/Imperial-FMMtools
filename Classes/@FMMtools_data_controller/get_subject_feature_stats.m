@@ -4,6 +4,18 @@ stats = [];
 
 if isempty(obj.ADC_trails_features_data), return, end;
             
+
+            names = {'subject','tot time','tot_ROI_time','num_ROIs', 'num_annotations',...
+                'N_anno_B','N_anno_G','N_anno_H','N_anno_L','N_anno_S','N_anno_O', ...
+                'N_proj_B','N_proj_G','N_proj_H','N_proj_L','N_proj_S','N_proj_O'};
+            for k = 1:length(obj.ADC_fv_all)
+                names = [names ['mean_' char(obj.ADC_fv_all(k))] ];
+                names = [names ['std_' char(obj.ADC_fv_all(k))] ];
+                names = [names ['Q25_' char(obj.ADC_fv_all(k))] ];
+                names = [names ['median_' char(obj.ADC_fv_all(k))] ];
+                names = [names ['Q75_' char(obj.ADC_fv_all(k))] ];                
+            end
+            
             d2 = obj.annotators_delay;
             d1 = obj.annotators_reaction; % [second] - minimal discernable time between event and annotation
             
@@ -28,17 +40,35 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 for k =1:length(anno)
                     A = anno(k);
                     cnt(A) = cnt(A)+1;
+                    
+                    T1 = anno_t(k)-3; % seconds
+                    T2 = anno_t(k)+1; % seconds
                     %
-                    T1 = anno_t(k) - d1 - d2;
-                    T2 = anno_t(k) - d1;
                     L = round((T1+T2)/2*obj.Fs_ADC);
-                    if L>=1 && L<=length(SGM) 
-                        if 0~= SGM(L)
+                    DL = round(d2/2*obj.Fs_ADC);
+                    L1 = L-DL;
+                    L2 = L+DL;
+                    L1 = max(L1,1);
+                    L2 = min(L2,length(SGM));
+                    token = zeros(size(SGM));
+                    token(L1:L2)=1;
+                    if 0~=sum(SGM&token)  
                             cnt_projected(A) = cnt_projected(A) + 1;
-                        end
-                    else
-                        disp([cellstr(obj.current_filename) num2cell([subj_ind L length(SGM)])]);
                     end
+                    
+%                     %
+%                     T1 = anno_t(k) - d1 - d2;
+%                     T2 = anno_t(k) - d1;
+%                                                             
+%                     L = round((T1+T2)/2*obj.Fs_ADC);
+%                     if L>=1 && L<=length(SGM) 
+%                         if 0~= SGM(L)
+%                             cnt_projected(A) = cnt_projected(A) + 1;
+%                         end
+%                     else
+%                         disp([cellstr(obj.current_filename) num2cell([subj_ind L length(SGM)])]);
+%                     end
+
                 end                    
                 %
                 z_lab = bwlabel(SGM);
@@ -64,5 +94,6 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 stats = [stats; params_data];
             end
             if ~isempty(hw), delete(hw), drawnow; end;
-
+            
+            stats = [names; stats];
 end
