@@ -643,7 +643,7 @@ cnt(type_ind) = cnt(type_ind)+1;
                     t0 = obj.current_annotation_time(k,1);
                     anno = obj.current_annotation(k,1);
                     if 2==anno || 5==anno % or startle or general
-                        lmin = fix((t0-3)*obj.Fs_ADC);
+                        lmin = fix((t0-3)*obj.Fs_ADC);          
                         lmax = fix((t0+1)*obj.Fs_ADC);
                         if lmin>=1 && lmax<=length(SGM)  && 0==sum(SGM(lmin:lmax))
                             SGM(lmin:lmax)=1;
@@ -659,13 +659,13 @@ cnt(type_ind) = cnt(type_ind)+1;
                     sgmntd_sgnls = sgmntd_sgnls | obj.current_ADC_segmented(:,k)';
                 end                                                                 
                 %
-                Rt = 0.15;
+                Rt = 0.1;
                 %
                 SGM_lab = bwlabel(SGM);
                 for l=1:max(SGM_lab)
                     z = (SGM_lab==l);
                     ratio = sum(z & sgmntd_sgnls)/sum(z);
-                    if ratio > Rt;
+                    if ratio < Rt;
                         SGM = SGM &~ z;
                     end
                 end                
