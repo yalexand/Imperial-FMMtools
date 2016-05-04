@@ -1420,7 +1420,7 @@ a_ranksum = 0.01;
                 IDX = [IDX; type];
             end
                         
-            if ~isempty(hw), delete(hw), drawnow; end;           
+            if ~isempty(hw), delete(hw), drawnow; end;
 
                     % set up available groups
                     available_types_ind = unique(IDX);
