@@ -87,12 +87,12 @@ classdef FMMtools_data_controller < handle
         ADC_prprss_notch_comb_fb = 39.1328; % base frequency, Hz
         ADC_prprss_notch_comb_bw = 0.0022; % bandwidth        
         %
-        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotator"s general/startle '};
+        segmentation_types = {'moving average subtraction + thresholding','ICA assisted thresholding','annotator"s b/g/s'};
         ADC_segm_Moving_Average_Window = 5; % seconds!
         ADC_segm_Minimal_Trail_Duration = 1.2;  %seconds       
         %
         supervised_learning_types = {'annotator"s + segmentation', ...
-                                            'annotator"s general/startle ', ...
+                                            'annotator"s b/g/s', ...
                                             'auto annotated'};
         %
         exclude_IMU = true;
@@ -522,9 +522,9 @@ cnt = zeros(1,6);
                     case {'g' 'G'}
                         type_ind = 2;
                     case {'h' 'H'}
-                        type_ind = 3;
+                        type_ind = 2; % sic!
                     case {'l' 'L'}
-                        type_ind = 4;
+                        type_ind = 2; % sic!
                     case {'s' 'S'}
                         type_ind = 5;
                     otherwise
@@ -542,7 +542,7 @@ cnt(type_ind) = cnt(type_ind)+1;
             num_ADC_channels = size(obj.current_data.ADC,2);
 
             hw = waitbar(0,[type ' segmenting ADC - please wait']);            
-            if strcmp(type,'moving average subtraction + thresholding') || strcmp(type,'annotator"s general/startle ')            
+            if strcmp(type,'moving average subtraction + thresholding') || strcmp(type,'annotator"s b/g/s')            
 
                 for k = 1 : num_ADC_channels
                     if ~isempty(hw), waitbar(k/num_ADC_channels,hw); drawnow, end;
@@ -635,14 +635,14 @@ cnt(type_ind) = cnt(type_ind)+1;
                         end   
             end
             %
-            if strcmp(type,'annotator"s general/startle ') % undo segmentations
+            if strcmp(type,'annotator"s b/g/s') % undo segmentations
                 % same for all
                 SGM = zeros(1,size(obj.current_ADC_segmented,1));
                                 
                 for k = 1:length(obj.current_annotation_time)
                     t0 = obj.current_annotation_time(k,1);
                     anno = obj.current_annotation(k,1);
-                    if 2==anno || 5==anno % or startle or general
+                    if 1==anno || 2==anno || 5==anno % b OR g OR s
                         lmin = fix((t0-3)*obj.Fs_ADC);          
                         lmax = fix((t0+1)*obj.Fs_ADC);
                         if lmin>=1 && lmax<=length(SGM)  && 0==sum(SGM(lmin:lmax))
@@ -680,8 +680,8 @@ cnt(type_ind) = cnt(type_ind)+1;
                 % same for all
                 
                 % is it OK here?
-                obj.groups_available = {'general','startle'};
-                obj.groups_selected = {'general','startle'};
+                obj.groups_available = {'breathe','general','startle'};
+                obj.groups_selected = {'breathe','general','startle'};
             end            
             if ~isempty(hw), delete(hw), drawnow; end;
             %            
@@ -965,7 +965,7 @@ cnt(type_ind) = cnt(type_ind)+1;
                 % data composed with selected featue vector but NOT filtered re selected groups    
                 [data,IDX] = obj.get_annotators_categorized_data('selected components');
                 
-                case 'annotator"s general/startle '
+                case 'annotator"s b/g/s'
                     [data,IDX] = obj.get_annotators_ONLY_categorized_data('selected components'); 
                 case 'auto annotated'
                     [data,IDX] = obj.get_auto_categorized_data('selected components');
@@ -1030,7 +1030,7 @@ cnt(type_ind) = cnt(type_ind)+1;
                     % data composed with selected featue vector but NOT filtered re selected groups    
                     [data,IDX] = obj.get_annotators_categorized_data('all components');
                 
-                case 'annotator"s general/startle '
+                case 'annotator"s b/g/s'
                     [data,IDX] = obj.get_annotators_ONLY_categorized_data('all components');
                 case 'auto annotated'
                     [data,IDX] = obj.get_auto_categorized_data('all components');
@@ -1207,7 +1207,7 @@ a_ranksum = 0.01;
                                 if (subj_index_k == subj)
                                     Ta = anno_t(a);
                                     A = anno(a);
-                                    if t1(k) <= Ta && Ta <= t2(k) && 0~=sum(A==[2 5]) % if inside interval AND (general OR startle)
+                                    if t1(k) <= Ta && Ta <= t2(k) && 0~=sum(A==[1 2 5]) % if inside interval AND (b OR g OR s)
                                         IDX = [IDX; anno(a)];
                                         data = [data; fv_data(k,:)];
                                         break;
@@ -1271,12 +1271,15 @@ a_ranksum = 0.01;
                     case 'annotator"s + segmentation'
                         % data composed with selected featue vector but NOT filtered re selected groups    
                         [data,IDX1] = obj.get_annotators_categorized_data('selected components');                                                                                                
-                    case 'annotator"s general/startle '
+                    case 'annotator"s b/g/s'
                         [data,IDX1] = obj.get_annotators_ONLY_categorized_data('selected components');
                     case 'auto annotated'                        
                         [data,IDX1] = obj.get_auto_categorized_data('selected components');                        
                     otherwise                    
                 end
+                
+                % data = rand(size(data)); % randomize :)
+                
                 % fix the data by retaining only wanted groups - starts
                 data_reducted = [];
                 IDX1_reducted = [];
