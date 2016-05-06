@@ -93,7 +93,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % params stats
                 params_data = [cellstr(obj.current_filename) num2cell([tot_time tot_time_ROIs tot_num_ROIs N_annotated cnt cnt_projected])];
                 subj_indices = cell2mat(obj.ADC_trails_features_data(:,2));
-                for k = 7:19
+                for k = 10:21
                     param = obj.ADC_trails_features_data(:,k);
                     sample = cell2mat(param(subj_indices==subj_ind));
                     v1 = mean(sample);
