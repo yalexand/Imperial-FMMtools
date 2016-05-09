@@ -749,15 +749,13 @@ cnt(type_ind) = cnt(type_ind)+1;
                 %                                                                          
                 t =(0:length(SGM)-1)'/obj.Fs_ADC; % seconds
                            
-                %%%%%%%%%%%%
-                % here is the place for creating the "ANNOTATION MAP" used
-                % expand annotations, then PROJECT z_lab
+                %%%%%%%%%%%% MATCHING - preparing objects, start
+                %
                 ANNO_MAP = zeros(size(z_lab));
                 % to assign annotations
                 ANNO_NAT = zeros(1,max(z_lab)); % "natural"
                 ANNO_DOC = zeros(1,max(z_lab)); % "doctor's"
                 ANNO_AUT = zeros(1,max(z_lab)); % "automatic"
-                %%%%%%%%%%%%                
                 %
                 anno = obj.current_annotation;
                 anno_t = obj.current_annotation_time;
@@ -770,14 +768,40 @@ cnt(type_ind) = cnt(type_ind)+1;
                     ANNO_MAP(pos) = A;
                 end;
                 %
-                dil_annos = dilate_labels(ANNO_MAP);
+                % 8 sec "dead zone", where ROI is too far from annotations
+                deadzone = ~imdilate(ANNO_MAP,strel('line',round(8*obj.Fs_ADC),90));
                 %
-                %%%%%%%%%%%%                                
+                ANNO_MAP = dilate_labels(ANNO_MAP); % until 1 (maybe 2?)-gaps only
+                %
+                % DEBUG
+                %figure(22);
+                %plot(t,ANNO_MAP,'r-',t,SGM,'b-',t,-deadzone,'g-');                                    
+                %
+                %%%%%%%%%%%% MATCHING - preparing objects, ends
                 
                 feats_subj = [];
                 fnames_subj = [];
                 for l=1:max(z_lab)
-                    if ~isempty(hw), waitbar(l/max(z_lab),hw); drawnow, end;
+                    if ~isempty(hw), waitbar(l/max(z_lab),hw); drawnow, end;                    
+                    %
+                    % use "z_lab", "ANNO_MAP", and "deadzone" to do matching                    
+                    ROI = (z_lab==l);
+                    A = 0; % annotation
+                    ROI_in_deadzone = (0~=sum(ROI&deadzone));
+                    %
+                    if ~ROI_in_deadzone
+                        ROI_annos = ANNO_MAP(z_lab==l);
+                        ROI_annos = ROI_annos(0~=ROI_annos);
+                        ROI_annos = unique(ROI_annos);
+                        if [1 1]==size(ROI_annos)
+                            A = ROI_annos;
+                        else
+                            disp([l max(z_lab) ROI_annos']);
+                        end
+                    end
+                    ANNO_NAT(1,l) = A;
+                    % matching - finished
+                    %
                     % for each segment.. look for best S/N channel
                     M = -Inf;
                     k_ = [];
@@ -959,7 +983,7 @@ cnt(type_ind) = cnt(type_ind)+1;
 
             [~,record_length] = size(obj.ADC_trails_features_data);
             
-            data = obj.get_selected_feature_vector_data;
+            [data,annos] = obj.get_selected_feature_vector_data;
             
             switch type
 
@@ -1024,9 +1048,10 @@ cnt(type_ind) = cnt(type_ind)+1;
                                     
         end        
 %-------------------------------------------------------------------------% 
-        function data = get_selected_feature_vector_data(obj,~,~)
+        function [data, annos] = get_selected_feature_vector_data(obj,~,~)
             data = [];
             [~,record_length] = size(obj.ADC_trails_features_data);
+            annos = cell2mat(obj.ADC_trails_features_data(:,7)); % annotations column            
             all_data = cell2mat(obj.ADC_trails_features_data(:,10:record_length)); % 10 is offset
             assert(size(all_data,2)==numel(obj.ADC_fv_all));
             for m = 1:numel(obj.ADC_fv_all),
@@ -1139,70 +1164,46 @@ a_ranksum = 0.01;
             % data composed with selected featue vector but NOT filtered re selected groups    
             switch mode
                 case 'selected components'
-                    fv_data = obj.get_selected_feature_vector_data;            
+                    [fv_data,annos] = obj.get_selected_feature_vector_data;            
                 case 'all components'
                     fv_temp = obj.ADC_fv_selected;
                     obj.ADC_fv_selected = obj.ADC_fv_all;
-                    fv_data = obj.get_selected_feature_vector_data;
+                    [fv_data,annos] = obj.get_selected_feature_vector_data;
                     obj.ADC_fv_selected = fv_temp;
             end
             
             t1 = cell2mat(obj.ADC_trails_features_data(:,4));
-            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
+            %
             data = [];
             IDX = [];  
-                    
-            d2 = obj.annotators_delay;
-            d1 = obj.annotators_reaction; % [second] - minimal discernable time between event and annotation
-            
-                   % array used in order not to re-assign ROI 
-                   % by next annotation after it was already
-                   % assigned by a previous one.. hope i get it right :)
-                   
-                   %roi_assigned = zeros(length(t1));             
-            
+                                            
                    for subj = 1:numel(obj.subj_data)
-                        anno = obj.subj_data(subj).annotation;
-                        anno_t = obj.subj_data(subj).annotation_time; 
+                        %
                         subj_name = obj.subj_data(subj).filename;
                         %
                         hw = waitbar(0,[ subj_name ' annotations - please wait']);
        
-% DISCREDITED...
-%                         for a=1:length(anno_t)
-%                         A = anno(a);    
-%                         if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
-%                             for k = 1:length(t1)
-%                                 subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
-%                                 if (subj_index_k == subj)
-%                                     T1 = anno_t(a) - d1 - d2;
-%                                     T2 = anno_t(a) - d1;
-%                                     t_ = (t1(k)+t2(k))/2;
-%                                     %if T1 <= t_ && t_ <= T2 && ~roi_assigned(k) && 0~=sum(A==[2 5])
-%                                     if T1 <= t_ && t_ <= T2 && ~roi_assigned(k)
-%                                         IDX = [IDX; A];
-%                                         data = [data; fv_data(k,:)];
-%                                         roi_assigned(k) = true;
-%                                         %disp([k a anno(a)]);
-%                                         break;
-%                                     end
-%                                 end                                
-%                             end
-%                         end    
-% DISCREDITED...
+%                           % RANDOMIZE!
+%                           ANNOS = unique(anno);
+%                              for k = 1:length(t1)
+%                                  subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
+%                                  if (subj_index_k == subj)
+%                                      L = length(ANNOS);
+%                                      IDX = [IDX ANNOS(1+round((L-1)*rand))];
+%                                      data = [data; fv_data(k,:)];
+%                                  end
+%                              end
+%                           % RANDOMIZE!                             
 
-                          % RANDOMIZE!
-                          ANNOS = unique(anno);
                              for k = 1:length(t1)
                                  subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
-                                 if (subj_index_k == subj)
-                                     L = length(ANNOS);
-                                     IDX = [IDX ANNOS(1+round((L-1)*rand))];
+                                 anno = annos(k);
+                                 if (subj_index_k == subj) && 0~=anno
+                                     IDX = [IDX anno];
                                      data = [data; fv_data(k,:)];
                                  end
-                             end
-                          % RANDOMIZE!                             
-                                                                                                  
+                             end                          
+                          
                         if ~isempty(hw), delete(hw), drawnow; end;           
                    end  
                    
@@ -1220,75 +1221,7 @@ a_ranksum = 0.01;
         end                                        
 %-------------------------------------------------------------------------%        
        function [data,IDX] = get_annotators_ONLY_categorized_data(obj,mode,~)
-            % data composed with selected featue vector but NOT filtered re selected groups    
-            switch mode
-                case 'selected components'
-                    fv_data = obj.get_selected_feature_vector_data;            
-                case 'all components'
-                    fv_temp = obj.ADC_fv_selected;
-                    obj.ADC_fv_selected = obj.ADC_fv_all;
-                    fv_data = obj.get_selected_feature_vector_data;
-                    obj.ADC_fv_selected = fv_temp;
-            end
-            
-            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
-            t2 = cell2mat(obj.ADC_trails_features_data(:,5));
-            data = [];
-            IDX = [];  
-                    
-                   for subj = 1:numel(obj.subj_data)
-                        anno = obj.subj_data(subj).annotation;
-                        anno_t = obj.subj_data(subj).annotation_time; 
-                        subj_name = obj.subj_data(subj).filename;
-                        %
-                        hw = waitbar(0,[ subj_name ' annotations - please wait']);
-                
-% DISCREDITED...                        
-%                         done_k = [];
-%                         for a=1:length(anno_t)
-%                         if ~isempty(hw), waitbar(a/length(anno_t),hw); drawnow, end;
-%                             for k = 1:length(t1)
-%                                 subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
-%                                 if (subj_index_k == subj) && isempty(intersect(done_k,k))
-%                                     Ta = anno_t(a);
-%                                     A = anno(a);
-%                                     if t1(k) <= Ta && Ta <= t2(k) && 0~=sum(A==[1 2 5]) % if inside interval AND (b OR g OR s)
-%                                         IDX = [IDX; anno(a)];
-%                                         data = [data; fv_data(k,:)];
-%                                         done_k = [done_k k];
-%                                         break;
-%                                     end
-%                                 end                                
-%                             end
-%                         end
-% DISCREDITED...
-                          
-                          % RANDOMIZE!
-                          ANNOS = unique(anno);
-                             for k = 1:length(t1)
-                                 subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
-                                 if (subj_index_k == subj)
-                                     L = length(ANNOS);
-                                     IDX = [IDX ANNOS(1+round((L-1)*rand))];
-                                     data = [data; fv_data(k,:)];
-                                 end
-                             end
-                          % RANDOMIZE!                             
-
-                        if ~isempty(hw), delete(hw), drawnow; end;           
-                   end  
-                   
-                    % set up available groups
-                    available_types_ind = unique(IDX);
-                    obj.groups_available = cell(1,length(available_types_ind));
-                    for k=1:numel(available_types_ind)
-                        obj.groups_available(k) = obj.groups_all(available_types_ind(k));
-                    end   
-                    
-                    % fix selected groups if needed
-                    if isempty(intersect(obj.groups_available,obj.groups_selected))
-                        obj.groups_selected = obj.groups_available;
-                    end  
+            [data,IDX] = obj.get_annotators_categorized_data(obj,mode); % that should be removed
         end        
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
