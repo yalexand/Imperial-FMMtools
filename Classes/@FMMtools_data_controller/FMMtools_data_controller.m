@@ -765,6 +765,7 @@ cnt(type_ind) = cnt(type_ind)+1;
                     A = anno(k);
                     pos = round((anno_t(k) - delay)*obj.Fs_ADC);
                     pos = max(1,pos);
+                    pos = min(length(ANNO_MAP),pos);
                     ANNO_MAP(pos) = A;
                 end;
                 %
@@ -787,7 +788,11 @@ cnt(type_ind) = cnt(type_ind)+1;
                     % use "z_lab", "ANNO_MAP", and "deadzone" to do matching                    
                     ROI = (z_lab==l);
                     A = 0; % annotation
+                    try
                     ROI_in_deadzone = (0~=sum(ROI&deadzone));
+                    catch
+                        disp('wow');
+                    end
                     %
                     if ~ROI_in_deadzone
                         ROI_annos = ANNO_MAP(z_lab==l);

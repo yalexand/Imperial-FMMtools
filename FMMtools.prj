@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="649497216" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="4129083765" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>FMMtools</param.appname>
     <param.icon>${PROJECT_ROOT}\FMMtools_resources\icon.ico</param.icon>
     <param.icons>
@@ -71,6 +71,7 @@
     <fileset.resources>
       <file>${PROJECT_ROOT}\addpath_FMMtools.m</file>
       <file>${PROJECT_ROOT}\Classes\@FMMtools_data_controller\FMMtools_data_controller.m</file>
+      <file>${PROJECT_ROOT}\Classes\@FMMtools_data_controller\get_subject_feature_stats.m</file>
       <file>${PROJECT_ROOT}\Classes\@FMMtools_gui\FMMtools_gui.m</file>
       <file>${PROJECT_ROOT}\Classes\@FMMtools_profile_controller\FMMtools_profile_controller.m</file>
       <file>${PROJECT_ROOT}\GUIDEInterfaces\feature_vector_components_chooser.fig</file>
@@ -84,6 +85,7 @@
       <file>${PROJECT_ROOT}\HelperFunctions\args2struct.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\assign_handles.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\correlation_map.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\dilate_labels.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\FastICA_25\fastica.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\FastICA_25\fpica.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\FastICA_25\icaplot.m</file>
