@@ -44,8 +44,8 @@ if isempty(obj.ADC_trails_features_data), return, end;
                     A = anno(k);
                     cnt(A) = cnt(A)+1;
                     
-                    T1 = anno_t(k)-3; % seconds
-                    T2 = anno_t(k)+1; % seconds
+                    T1 = anno_t(k)-3.5; % seconds
+                    T2 = anno_t(k)+1.5; % seconds
                     %
                     L = round((T1+T2)/2*obj.Fs_ADC);
                     DL = round(d2/2*obj.Fs_ADC);
@@ -61,20 +61,6 @@ if isempty(obj.ADC_trails_features_data), return, end;
                     %
                     anno_tot = anno_tot|token;
                     %
-                    
-%                     %
-%                     T1 = anno_t(k) - d1 - d2;
-%                     T2 = anno_t(k) - d1;
-%                                                             
-%                     L = round((T1+T2)/2*obj.Fs_ADC);
-%                     if L>=1 && L<=length(SGM) 
-%                         if 0~= SGM(L)
-%                             cnt_projected(A) = cnt_projected(A) + 1;
-%                         end
-%                     else
-%                         disp([cellstr(obj.current_filename) num2cell([subj_ind L length(SGM)])]);
-%                     end
-
                 end
                 %
                 z_lab = bwlabel(SGM);
@@ -93,7 +79,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % params stats
                 params_data = [cellstr(obj.current_filename) num2cell([tot_time tot_time_ROIs tot_num_ROIs N_annotated cnt cnt_projected])];
                 subj_indices = cell2mat(obj.ADC_trails_features_data(:,2));
-                for k = 10:21
+                for k = 10:22
                     param = obj.ADC_trails_features_data(:,k);
                     sample = cell2mat(param(subj_indices==subj_ind));
                     v1 = mean(sample);
@@ -106,13 +92,15 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 end
                 %
                 params_data = [params_data num2cell(tot_annotators_time)];
-                params_data = [params_data num2cell(tot_annotators_projected_ROIs)];                
+                params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
+                ROI_time_out_of_annos = sum( SGM &~ anno_tot )/obj.Fs_ADC;
+                params_data = [params_data num2cell(ROI_time_out_of_annos)];
                 %
                 stats = [stats; params_data];
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
-            names = [names {'tot_anno_time','num_anno_proj_ROIs'}];
+            names = [names {'tot_anno_time','num_anno_proj_ROIs','ROI_time_out_of_annos'}];
             
             stats = [names; stats];
 end
