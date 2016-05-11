@@ -644,19 +644,19 @@ cnt(type_ind) = cnt(type_ind)+1;
                     anno = obj.current_annotation(k,1);
                         lmin = fix((t0-3)*obj.Fs_ADC);
                         lmax = fix((t0+1)*obj.Fs_ADC);
-                        if lmin>=1 && lmax<=length(SGM)  && 0==sum(SGM(lmin:lmax))
+                        if lmin>=1 && lmax<=length(SGM) && 0==sum(SGM(lmin:lmax)) % NB: if not empty on SGM
                             SGM(lmin:lmax)=1;
                         end
                 end                
                 %
                 % the idea is to reject ROI if it doesn't contain enough
                 % signal
-                sgmntd_sgnls = zeros(size(SGM));
-                for k = 1 : num_ADC_channels% same for all
-                    sgmntd_sgnls = sgmntd_sgnls | obj.current_ADC_segmented(:,k)';
-                end
-                %
-                % does it work properly?
+%                 sgmntd_sgnls = zeros(size(SGM));
+%                 for k = 1 : num_ADC_channels% same for all
+%                     sgmntd_sgnls = sgmntd_sgnls | obj.current_ADC_segmented(:,k)';
+%                 end
+%                 %
+%                 % does it work properly?
 %                 Rt = 0.1;
 %                 %
 %                 SGM_lab = bwlabel(SGM);
@@ -687,19 +687,19 @@ cnt(type_ind) = cnt(type_ind)+1;
             %            
             
                 % one segmentation for all - for debugging
-                SGM = obj.current_ADC_segmented(:,1);
-                for k = 2 : num_ADC_channels
-                    SGM = SGM | obj.current_ADC_segmented(:,k);
-                end
-                SGM_lab = bwlabel(SGM);
-                N_segmented = max(SGM_lab);
-                N_annotated = length(obj.current_annotation);
-                
-                str = obj.current_filename;
-                str = strrep(str,'SUBJECT_','');
-                str = strrep(str,'.mat','');
-                subj_num = str2num(str);                                
-                disp([subj_num N_annotated N_segmented cnt]);                 
+%                 SGM = obj.current_ADC_segmented(:,1);
+%                 for k = 2 : num_ADC_channels
+%                     SGM = SGM | obj.current_ADC_segmented(:,k);
+%                 end
+%                 SGM_lab = bwlabel(SGM);
+%                 N_segmented = max(SGM_lab);
+%                 N_annotated = length(obj.current_annotation);
+%                 
+%                 str = obj.current_filename;
+%                 str = strrep(str,'SUBJECT_','');
+%                 str = strrep(str,'.mat','');
+%                 subj_num = str2num(str);                                
+%                 disp([subj_num N_annotated N_segmented cnt]);                 
                 
         end        
 %-------------------------------------------------------------------------%        
@@ -1015,20 +1015,13 @@ cnt(type_ind) = cnt(type_ind)+1;
             if isempty(obj.ADC_trails_features_data), return, end;
                                     
             % display annotated data in canonic coords
-            switch type
-                
-                case 'annotator"s + segmentation'
-
+            switch type                
+                case {'annotator"s + segmentation','annotator"s b/g/s'}
                 % data composed with selected featue vector but NOT filtered re selected groups    
-                [data,IDX] = obj.get_annotators_categorized_data('selected components');
-                
-                case 'annotator"s b/g/s'
-                    [data,IDX] = obj.get_annotators_ONLY_categorized_data('selected components'); 
+                [data,IDX] = obj.get_annotators_categorized_data('selected components');                
                 case 'auto annotated'
-                    [data,IDX] = obj.get_auto_categorized_data('selected components');
-                    
-                otherwise
-                    
+                    [data,IDX] = obj.get_auto_categorized_data('selected components');                    
+                otherwise                    
             end
             %
             % fix the data by retaining only wanted groups - starts
@@ -1081,20 +1074,13 @@ cnt(type_ind) = cnt(type_ind)+1;
             if isempty(obj.ADC_trails_features_data), return, end;
                                     
             % display annotated data in canonic coords
-            switch type
-                
-                case 'annotator"s + segmentation'
-
+            switch type                
+                case {'annotator"s + segmentation','annotator"s b/g/s'}
                     % data composed with selected featue vector but NOT filtered re selected groups    
-                    [data,IDX] = obj.get_annotators_categorized_data('all components');
-                
-                case 'annotator"s b/g/s'
-                    [data,IDX] = obj.get_annotators_ONLY_categorized_data('all components');
+                    [data,IDX] = obj.get_annotators_categorized_data('all components');                
                 case 'auto annotated'
-                    [data,IDX] = obj.get_auto_categorized_data('all components');
-                    
-                otherwise
-                    
+                    [data,IDX] = obj.get_auto_categorized_data('all components');                    
+                otherwise                    
             end
 
             %compile 2 corresponding satistical samples and evaluate them
@@ -1224,10 +1210,6 @@ a_ranksum = 0.01;
                         obj.groups_selected = obj.groups_available;
                     end  
         end                                        
-%-------------------------------------------------------------------------%        
-       function [data,IDX] = get_annotators_ONLY_categorized_data(obj,mode,~)
-            [data,IDX] = obj.get_annotators_categorized_data(obj,mode); % that should be removed
-        end        
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
         % NB - this function presumes that both ADC and IMU
@@ -1265,11 +1247,9 @@ a_ranksum = 0.01;
             CM = [];
             
                 switch source_type                
-                    case 'annotator"s + segmentation'
+                    case {'annotator"s + segmentation','annotator"s b/g/s'}
                         % data composed with selected featue vector but NOT filtered re selected groups    
                         [data,IDX1] = obj.get_annotators_categorized_data('selected components');                                                                                                
-                    case 'annotator"s b/g/s'
-                        [data,IDX1] = obj.get_annotators_ONLY_categorized_data('selected components');
                     case 'auto annotated'                        
                         [data,IDX1] = obj.get_auto_categorized_data('selected components');                        
                     otherwise                    
