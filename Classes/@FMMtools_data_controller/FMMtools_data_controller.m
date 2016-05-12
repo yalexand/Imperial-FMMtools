@@ -1308,7 +1308,8 @@ a_ranksum = 0.01;
                                             IDX2(i) = classify(data(i,:),train_data,train_group,'Quadratic');
                                         end
                                     case {'kNN','PCA->kNN'}
-                                        IDX2(i) = knnclassify(data(i,:),train_data,train_group);
+                                        mdl = fitcknn(train_data,train_group);
+                                        IDX2(i) = predict(mdl,data(i,:));
                                 end
                                 %                            
                             end
