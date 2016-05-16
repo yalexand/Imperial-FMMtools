@@ -93,14 +93,20 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 %
                 params_data = [params_data num2cell(tot_annotators_time)];
                 params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
-                ROI_time_out_of_annos = sum( SGM &~ anno_tot )/obj.Fs_ADC;
-                params_data = [params_data num2cell(ROI_time_out_of_annos)];
+                % estimated "number of annotations out of annotations"
+                % two ways of doing that
+                % num_anno_out = round(sum(imdilate(SGM &~
+                % anno_tot,strel('line',round(2.5*obj.Fs_ADC),90)))/(5*obj.Fs_ADC)); % over esttimates 
+                % 
+                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
+                %disp([max(z_lab) num_anno_out]);                
+                params_data = [params_data num2cell(max(z_lab))];
                 %
                 stats = [stats; params_data];
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
-            names = [names {'tot_anno_time','num_anno_proj_ROIs','ROI_time_out_of_annos'}];
+            names = [names {'tot_anno_time','num_anno_proj_ROIs','num_anno_out'}];
             
             stats = [names; stats];
 end
