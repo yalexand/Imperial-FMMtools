@@ -788,20 +788,28 @@ cnt(type_ind) = cnt(type_ind)+1;
                     % use "z_lab", "ANNO_MAP", and "deadzone" to do matching                    
                     ROI = (z_lab==l);
                     A = 0; % annotation
-                    try
+                    %
                     ROI_in_deadzone = (0~=sum(ROI&deadzone));
-                    catch
-                        disp('wow');
-                    end
                     %
                     if ~ROI_in_deadzone
                         ROI_annos = ANNO_MAP(z_lab==l);
                         ROI_annos = ROI_annos(0~=ROI_annos);
-                        ROI_annos = unique(ROI_annos);
-                        if [1 1]==size(ROI_annos)
-                            A = ROI_annos;
+                        ROI_annos_U = unique(ROI_annos);
+                        if 1==length(ROI_annos_U)
+                            A = ROI_annos_U;
+                        elseif 2==length(ROI_annos_U) % judge by which one is more abundant
+                            %
+                            A1 = ROI_annos_U(1);
+                            A2 = ROI_annos_U(2);
+                            p1 = sum(A1==ROI_annos)/sum(ROI_annos(:));
+                            if p1 > 0.6 % :) arbitrary
+                                A = A1;
+                            elseif p1 < 0.4
+                                A = A2;
+                            end
+                            %
                         else
-                            disp([l max(z_lab) ROI_annos']);
+                            disp([l max(z_lab) ROI_annos_U']);
                         end
                     end
                     ANNO_NAT(1,l) = A;
