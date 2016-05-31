@@ -517,18 +517,19 @@ cnt = zeros(1,6);
             for k = 1:length(event_times)
                 obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
                 switch char(event_types(k,1))
-                    case {'b' 'B'}
+                    case {'b' 'B' 'bb' 'bg'}
                         type_ind = 1;                        
-                    case {'g' 'G'}
+                    case {'g' 'G' 'gg' 'gs'}
                         type_ind = 2;
                     case {'h' 'H'}
                         type_ind = 2; % sic!
                     case {'l' 'L'}
                         type_ind = 2; % sic!
-                    case {'s' 'S'}
+                    case {'s' 'S' 'sg'}
                         type_ind = 5;
                     otherwise
                         type_ind = 6; % ehm..
+                        disp(char(event_types(k,1)));
                 end
                 obj.current_annotation(k,1) = type_ind;
 cnt(type_ind) = cnt(type_ind)+1;
@@ -1171,7 +1172,7 @@ a_ranksum = 0.01;
                     obj.ADC_fv_selected = fv_temp;
             end
             
-            t1 = cell2mat(obj.ADC_trails_features_data(:,4));
+            t1 = cell2mat(obj.ADC_trails_features_data(:,5));
             %
             data = [];
             IDX = [];  
@@ -1199,13 +1200,14 @@ a_ranksum = 0.01;
                                  anno = annos(k);
                                  if (subj_index_k == subj) && 0~=anno
                                      IDX = [IDX anno];
-                                     data = [data; fv_data(k,:)];
-                                 end
+                                     data = [data; fv_data(k,:)];                                     
+                                 end                                                                                                   
                              end                          
                           
                         if ~isempty(hw), delete(hw), drawnow; end;           
+                                                
                    end  
-                   
+                                     
                     % set up available groups
                     available_types_ind = unique(IDX);
                     obj.groups_available = cell(1,length(available_types_ind));
@@ -1278,7 +1280,7 @@ a_ranksum = 0.01;
                 IDX1 = IDX1_reducted;
                 % fix the data by retaining only wanted groups - ends
                 
-                % PCA data if needed, & choose first 3 compnents
+                % PCA data if needed, & choose first 3 components
                 truncation = 3;                                
                 if ~isempty(strfind(method,'PCA')) && size(data,2)>=truncation
                     V = cov(data);
