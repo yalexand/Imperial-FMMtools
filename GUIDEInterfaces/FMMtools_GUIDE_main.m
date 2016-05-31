@@ -78,6 +78,10 @@ set(handles.confusion_matrix, 'Data', zeros(6));
 set(handles.confusion_matrix, 'RowName', data_controller.groups_all);
 set(handles.confusion_matrix, 'ColumnName', data_controller.groups_all);
 set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']);
+%
+set(handles.unknowns_class_table,'Data',zeros(6,1));
+set(handles.unknowns_class_table,'RowName', data_controller.groups_all);
+
 
 set(handles.supervised_classification_type, 'String', data_controller.supervised_learning_method);
 
@@ -886,7 +890,11 @@ function setup_available_group_items(handles)
     set(handles.confusion_matrix, 'Data', zeros(numel(dc.groups_selected)));
     set(handles.confusion_matrix, 'RowName', dc.groups_selected);
     set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);
-    set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']);    
+    set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']); 
+    %
+    set(handles.unknowns_class_table,'Data',zeros(numel(dc.groups_selected,1)));
+    set(handles.unknowns_class_table,'RowName', dc.groups_selected);
+    
 %-------------------------------------------------------------------------%      
     function clear_pairwise_comparison_visuals(handles)               
     cla(handles.pairwise_group_comparison_axes,'reset');
@@ -1103,7 +1111,11 @@ feature_vector_components_chooser(dc,hObject, eventdata, handles);
     set(handles.confusion_matrix, 'RowName', dc.groups_selected);
     set(handles.confusion_matrix, 'ColumnName', dc.groups_selected);
     set(handles.diagonal_strength_text, 'String',['diagonal strength ' '?']);  
+%
+    set(handles.unknowns_class_table,'Data',zeros(numel(dc.groups_selected,1)));
+    set(handles.unknowns_class_table,'RowName', dc.groups_selected);
 
+        
 % --------------------------------------------------------------------
 function save_training_data_Callback(hObject, eventdata, handles)
 % hObject    handle to save_training_data (see GCBO)
@@ -1287,6 +1299,12 @@ if ~isempty(CM)
     set(handles.confusion_matrix, 'RowName', dc.groups_all(groups)); % must be dc_groups_selected
     set(handles.confusion_matrix, 'ColumnName', dc.groups_all(groups));
     set(handles.diagonal_strength_text, 'String',['diagonal strength ' num2str(sum(diag(CM/sum(CM(:)))))]);
+end
+%
+[groups,group_nums] = dc.classify_unannotated_data(method);
+if ~isempty(group_nums)
+    set(handles.unknowns_class_table,'Data',group_nums');
+    set(handles.unknowns_class_table,'RowName', dc.groups_all(groups)); % must be dc_groups_selected
 end
 
 % --- Executes on selection change in pairwise_comparison_stats.

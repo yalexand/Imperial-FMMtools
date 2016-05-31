@@ -1219,7 +1219,37 @@ a_ranksum = 0.01;
                     if isempty(intersect(obj.groups_available,obj.groups_selected))
                         obj.groups_selected = obj.groups_available;
                     end  
-        end                                        
+        end
+%-------------------------------------------------------------------------%
+        function data = get_annotators_uncategorized_data(obj,mode,~)
+            % data composed with selected featue vector but NOT filtered re selected groups    
+            switch mode
+                case 'selected components'
+                    [fv_data,annos] = obj.get_selected_feature_vector_data;            
+                case 'all components'
+                    fv_temp = obj.ADC_fv_selected;
+                    obj.ADC_fv_selected = obj.ADC_fv_all;
+                    [fv_data,annos] = obj.get_selected_feature_vector_data;
+                    obj.ADC_fv_selected = fv_temp;
+            end
+            
+            t1 = cell2mat(obj.ADC_trails_features_data(:,5));
+            %
+            data = [];                                            
+                   for subj = 1:numel(obj.subj_data)                        
+                        subj_name = obj.subj_data(subj).filename;
+                        %
+                        hw = waitbar(0,[ subj_name ' picking up the un-annotated data - please wait']);     
+                             for k = 1:length(t1)
+                                 subj_index_k = cell2mat(obj.ADC_trails_features_data(k,2)); % faster via index
+                                 anno = annos(k);
+                                 if (subj_index_k == subj) && 0==anno
+                                     data = [data; fv_data(k,:)];                                     
+                                 end                                                                                                   
+                             end                                                    
+                        if ~isempty(hw), delete(hw), drawnow; end;                                                           
+                   end                                       
+        end
 %-------------------------------------------------------------------------%
         function possibly_exclude_ADC_findings_with_simultaneous_IMU_response(obj,~,~)
         % NB - this function presumes that both ADC and IMU
@@ -1341,8 +1371,72 @@ a_ranksum = 0.01;
                     i2 = find(groups==g2);
                     CM(i1,i2) = CM(i1,i2)+1;
                 end
-                %CM = CM/sum(CM(:));                                    
-        end                                    
+                %CM = CM/sum(CM(:));                  
+        end                                                    
+%-------------------------------------------------------------------------%                 
+        function [groups,group_nums] = classify_unannotated_data(obj,method,~)
+            
+            groups = [];
+            group_nums = [];
+            
+            [data,IDX1] = obj.get_annotators_categorized_data('selected components');                                                                                                
+                                
+            % fix the data by retaining only wanted groups - starts
+            data_reducted = [];
+            IDX1_reducted = [];
+            for k = 1:numel(IDX1)
+                if ~isempty(intersect(obj.groups_all(IDX1(k)),obj.groups_selected))
+                    data_reducted = [data_reducted; data(k,:)];
+                    IDX1_reducted = [IDX1_reducted; IDX1(k)];
+                end
+            end
+            
+            TR_data = data_reducted;
+            TR_IDX = IDX1_reducted;
+            % fix the data by retaining only wanted groups - ends
+                
+            TST_data = obj.get_annotators_uncategorized_data('selected components');
+            
+            % PCA data if needed, & choose first 3 components
+            truncation = 3;                                
+            if ~isempty(strfind(method,'PCA')) && size(TR_data,2)>=truncation
+                    V = cov(TR_data);
+                    %V = cov(zscore(data)); % ?? no diff..
+                    SD = sqrt(diag(V));
+                    R = V./(SD*SD');
+                    COEFF = pcacov(R);
+                    %
+                    U = TR_data*COEFF;
+                    TR_data = U(:,1:truncation);                                
+                    %
+                    U = TST_data*COEFF;
+                    TST_data = U(:,1:truncation);                                                                        
+            end
+            % PCA data if needed, & choose first 3 compnents                                             
+                    %
+                    try                                
+                        switch method                
+                            case {'Linear','Quadratic','PCA->Linear','PCA->Quadratic'}
+                                if ~isempty(strfind(method,'Linear'))
+                                    IDX2 = classify(TST_data,TR_data,TR_IDX,'Linear');
+                                else
+                                    IDX2 = classify(TST_data,TR_data,TR_IDX,'Quadratic');
+                                end
+                            case {'kNN','PCA->kNN'}
+                                mdl = fitcknn(TR_data,TR_IDX);
+                                IDX2 = predict(mdl,TST_data);
+                        end
+                    catch
+                        errordlg('classify error - possibly not enough data..');
+                        return;
+                    end
+                    
+            groups = sort(unique(TR_IDX));            
+            group_nums = zeros(1,length(groups));
+            for k = 1:length(group_nums)
+                group_nums(k) = sum(groups(k)==IDX2(:));
+            end
+        end                                                                                    
 %-------------------------------------------------------------------------%         
         % "mocking" annotation function for debug
         function [data,IDX] = get_auto_categorized_data(obj,mode,~)
