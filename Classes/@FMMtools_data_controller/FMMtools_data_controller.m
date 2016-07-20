@@ -710,9 +710,8 @@ cnt(type_ind) = cnt(type_ind)+1;
             fnames = [];    
             
             hw = waitbar(0,'Extracting trails features - please wait');
-            if ~isempty(hw), waitbar(1/20,hw); drawnow, end;
-            
-            for subj_ind = 1:length(obj.subj_filenames)
+            %
+            for subj_ind = 1:length(obj.subj_filenames)                                  
                 %
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
                 %
@@ -783,8 +782,10 @@ cnt(type_ind) = cnt(type_ind)+1;
                 
                 feats_subj = [];
                 fnames_subj = [];
+                
+                hw1 = waitbar(0,['quantifying ROIs - ' char(obj.subj_filenames(subj_ind))]);                
                 for l=1:max(z_lab)
-                    if ~isempty(hw), waitbar(l/max(z_lab),hw); drawnow, end;                    
+                    if ~isempty(hw1), waitbar(l/max(z_lab),hw1); drawnow, end;
                     %
                     % use "z_lab", "ANNO_MAP", and "deadzone" to do matching                    
                     ROI = (z_lab==l);
@@ -870,8 +871,11 @@ cnt(type_ind) = cnt(type_ind)+1;
                             fnames_subj = [fnames_subj; cellstr(obj.current_filename)];
                         end                                                                                                    
                 end % for l=1:max(z_lab)                                                            
+                if ~isempty(hw1), delete(hw1), drawnow; end;
+                %
                 feats = [feats; feats_subj];
                 fnames = [fnames; fnames_subj];
+                if ~isempty(hw), waitbar(subj_ind/length(obj.subj_filenames),hw); drawnow, end;                                    
             end % for subj_ind = 1:length(obj.subj_filenames)
             if ~isempty(hw), delete(hw), drawnow; end;
             %

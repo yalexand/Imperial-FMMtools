@@ -99,14 +99,26 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % anno_tot,strel('line',round(2.5*obj.Fs_ADC),90)))/(5*obj.Fs_ADC)); % over esttimates 
                 % 
                 z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
-                %disp([max(z_lab) num_anno_out]);                
-                params_data = [params_data num2cell(max(z_lab))];
-                %
+                %disp([max(z_lab) num_anno_out]);
+                params_data = [params_data num2cell(max(z_lab))];                
+                                
+                % STATS ON LATENCY INTERVALS - STARTS
+                z_lab = bwlabel(~SGM);
+                STATS = regionprops(z_lab,'Area');
+                sample = cat(1, STATS.Area)/obj.Fs_ADC;
+                    v1 = mean(sample);
+                    v2 = std(sample);
+                    v3 = quantile(sample,.25);
+                    v4 = median(sample);
+                    v5 = quantile(sample,.75);
+                params_data = [params_data v1 v2 v3 v4 v5 ];                    
+                % STATS ON LATENCY INTERVALS - ENDS                                                
+                %                               
                 stats = [stats; params_data];
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
-            names = [names {'tot_anno_time','num_anno_proj_ROIs','num_anno_out'}];
+            names = [names {'tot_anno_time','num_anno_proj_ROIs','num_anno_out','mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT'}];            
             
             stats = [names; stats];
 end
