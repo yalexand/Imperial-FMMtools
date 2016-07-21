@@ -90,18 +90,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
                     %
                     params_data = [params_data num2cell([v1 v2 v3 v4 v5])];
                 end
-                %
-                params_data = [params_data num2cell(tot_annotators_time)];
-                params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
-                % estimated "number of annotations out of annotations"
-                % two ways of doing that
-                % num_anno_out = round(sum(imdilate(SGM &~
-                % anno_tot,strel('line',round(2.5*obj.Fs_ADC),90)))/(5*obj.Fs_ADC)); % over esttimates 
-                % 
-                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
-                %disp([max(z_lab) num_anno_out]);
-                params_data = [params_data num2cell(max(z_lab))];                
-                                
+                %                
                 % STATS ON LATENCY INTERVALS - STARTS
                 z_lab = bwlabel(~SGM);
                 STATS = regionprops(z_lab,'Area');
@@ -112,13 +101,26 @@ if isempty(obj.ADC_trails_features_data), return, end;
                     v4 = median(sample);
                     v5 = quantile(sample,.75);
                 params_data = [params_data v1 v2 v3 v4 v5 ];                    
+                %
+                params_data = [params_data num2cell(tot_annotators_time)];
+                params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
+                %
                 % STATS ON LATENCY INTERVALS - ENDS                                                
-                %                               
+                %                                                               
+                % estimated "number of annotations out of annotations"
+                % two ways of doing that
+                % num_anno_out = round(sum(imdilate(SGM &~
+                % anno_tot,strel('line',round(2.5*obj.Fs_ADC),90)))/(5*obj.Fs_ADC)); % over esttimates 
+                % 
+                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
+                %disp([max(z_lab) num_anno_out]);
+                params_data = [params_data num2cell(max(z_lab))];                
+                                
                 stats = [stats; params_data];
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
-            names = [names {'tot_anno_time','num_anno_proj_ROIs','num_anno_out','mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT'}];            
+            names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT','tot_anno_time','num_anno_proj_ROIs','num_anno_out'}];            
             
             stats = [names; stats];
 end
