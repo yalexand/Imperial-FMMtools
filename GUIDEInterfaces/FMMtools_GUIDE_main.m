@@ -1192,9 +1192,9 @@ catch
 end
 if isempty(z), clear_pairwise_comparison_visuals(handles), return, end;
 
-g1_plot_mode = 'c.-';
-g2_plot_mode = 'm.-';
-plot(handles.pairwise_group_comparison_axes,X1,Y1,g1_plot_mode,X2,Y2,g2_plot_mode);
+g1_plot_mode = '.k-';
+g2_plot_mode = '.b:';
+plot(handles.pairwise_group_comparison_axes,X1,Y1,g1_plot_mode,X2,Y2,g2_plot_mode,'LineWidth',2,'MarkerSize',12);
 grid(handles.pairwise_group_comparison_axes,'on');
 
 set(handles.pairwise_comparison_stats,'String', ...
@@ -1209,6 +1209,39 @@ set(handles.pairwise_comparison_stats,'String', ...
 ['p_KS = ', num2str(z.p_ks)], ...
 ['p_rnk = ', num2str(z.p_rnk)]});
 legend(handles.pairwise_group_comparison_axes,[group1, group2]);
+
+
+function pairwise_group_comparison_snap_Callback(hObject, eventdata, handles)
+str = get(handles.pairwise_group_comparison_feature,'String');
+feature_vector_name = str(get(handles.pairwise_group_comparison_feature,'Value'));
+%
+str = get(handles.pairwise_group_comparison_item1,'String');
+group1 = str(get(handles.pairwise_group_comparison_item1,'Value'));
+%
+str = get(handles.pairwise_group_comparison_item2,'String');
+group2 = str(get(handles.pairwise_group_comparison_item2,'Value'));
+%    
+h = figure;
+copyobj(handles.pairwise_group_comparison_axes,h);
+set(gca,'Position',[0.14 0.14 0.8 0.8]);
+xlabel(feature_vector_name,'FontSize',14)
+ylabel('probability','FontSize',14)
+legend([group1, group2],'FontSize',14);
+grid on;
+
+            
+function supervised_classification_snap_Callback(hObject, eventdata, handles)
+h = figure;
+copyobj(handles.supervised_classification_pane,h);
+set(gca,'Position',[0.14 0.14 0.8 0.8]);
+xlabel('C1','FontSize',14);
+ylabel('C2','FontSize',14);
+ax = findall(h,'type','axes');
+IDX = handles.sup_IDX;
+dc = handles.data_controller;
+LEGENDS = dc.groups_all(sort(unique(IDX)));
+legend(ax,LEGENDS,'FontSize',14);
+
 
 % --- Executes on selection change in pairwise_group_comparison_item1.
 function pairwise_group_comparison_item1_Callback(hObject, eventdata, handles)

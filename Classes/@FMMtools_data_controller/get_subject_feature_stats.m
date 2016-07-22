@@ -106,7 +106,18 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
                 %
                 % STATS ON LATENCY INTERVALS - ENDS                                                
-                %                                                               
+                %                    
+                % number of active channels
+                num_ADC_channels = size(obj.current_data.ADC,2);
+                n_active_channels = 0;
+                for k = 1 : num_ADC_channels                    
+                    if 0~=sum(obj.current_ADC_pre_processed(:,k))
+                        n_active_channels = n_active_channels + 1;
+                    end                        
+                end                
+                % number of active channels
+                params_data = [params_data num2cell(n_active_channels)];                
+                %
                 % estimated "number of annotations out of annotations"
                 % two ways of doing that
                 % num_anno_out = round(sum(imdilate(SGM &~
@@ -114,13 +125,13 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % 
                 z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
                 %disp([max(z_lab) num_anno_out]);
-                params_data = [params_data num2cell(max(z_lab))];                
+                params_data = [params_data num2cell(max(z_lab))]; % num_anno_out               
                                 
                 stats = [stats; params_data];
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
-            names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT','tot_anno_time','num_anno_proj_ROIs','num_anno_out'}];            
+            names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT','tot_anno_time','num_anno_proj_ROIs','n_actv_dtctrs','num_anno_out'}];            
             
             stats = [names; stats];
 end
