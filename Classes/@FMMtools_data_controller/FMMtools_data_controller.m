@@ -558,7 +558,7 @@ cnt(type_ind) = cnt(type_ind)+1;
                         t = quantile(s_(:),obj.ADC_sgm_low_signal_quantile); %  take low 10% of signal
                         z = s_(s_<t);
                         %
-                        t = obj.ADC_sgm_SN*median(z(:)); % threshold at 100X (or whatever) average noise level
+                            t = obj.ADC_sgm_SN*median(z(:)); % threshold at 100X (or whatever) average noise level
                         %
                         if t < obj.ADC_sgm_signal_cutoff, t = Inf; end; % PRECAUTION AGAINST TOO NOISY SIGNALS                    
                         %
@@ -1283,7 +1283,7 @@ a_ranksum = 0.01;
                     end
                     if ~isempty(hw), delete(hw), drawnow; end;                                                            
             end;
-        end
+        end        
 %-------------------------------------------------------------------------%
         function [groups,CM] = calculate_confusion_matrix(obj,source_type,method,~)
             

@@ -102,21 +102,32 @@ if isempty(obj.ADC_trails_features_data), return, end;
                     v5 = quantile(sample,.75);
                 params_data = [params_data v1 v2 v3 v4 v5 ];                    
                 %
+                % STATS ON LATENCY INTERVALS - ENDS                                                                
+                %
                 params_data = [params_data num2cell(tot_annotators_time)];
                 params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
                 %
-                % STATS ON LATENCY INTERVALS - ENDS                                                
+                % start %%%%%%% the % of the latent annotated time, also latent according to the detection
+                dil_SGM = imdilate(SGM,strel('line',round(2.5*obj.Fs_ADC),90));
+                prcntg_anno_time_latent_also_latent_by_sensor = sum( (~anno_tot) & (~dil_SGM) )/sum( ~anno_tot);
+                % end %%%%%%% the % of the latent annotated time, also latent according to the detection                                                
+                params_data = [params_data num2cell(prcntg_anno_time_latent_also_latent_by_sensor)];
                 %                    
                 % number of active channels
                 num_ADC_channels = size(obj.current_data.ADC,2);
                 n_active_channels = 0;
+                n_used_channels = 0;
                 for k = 1 : num_ADC_channels                    
                     if 0~=sum(obj.current_ADC_pre_processed(:,k))
                         n_active_channels = n_active_channels + 1;
                     end                        
-                end                
+                    if 0~=sum(obj.current_ADC_segmented(:,k))
+                        n_used_channels = n_used_channels + 1;
+                    end                                            
+                end                                                
                 % number of active channels
-                params_data = [params_data num2cell(n_active_channels)];                
+                params_data = [params_data num2cell(n_active_channels)];
+                params_data = [params_data num2cell(n_used_channels)];
                 %
                 % estimated "number of annotations out of annotations"
                 % two ways of doing that
@@ -131,7 +142,9 @@ if isempty(obj.ADC_trails_features_data), return, end;
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
-            names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT','tot_anno_time','num_anno_proj_ROIs','n_actv_dtctrs','num_anno_out'}];            
+            names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT', ...
+                'tot_anno_time','num_anno_proj_ROIs','prcntg_anno_time_latent_also_latent_by_sensor', ...
+                'n_actv_dtctrs','n_used_dtctrs','num_anno_out'}];            
             
             stats = [names; stats];
 end
