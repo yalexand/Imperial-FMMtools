@@ -506,35 +506,61 @@ end
                event_type_ind = 2;
             end
             
-            event_types = US_data(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
-            obj.current_annotation = zeros(size(event_times,1),1);
-            obj.current_annotation_time = zeros(size(event_times,1),1);            
-            %
-            type_ind = 0; % for now...
-            %
-cnt = zeros(1,6);
+% % % %             event_types = US_data(:,event_type_ind); % 1,2,3,4,5 -> b,g,h,l,s            
+% % % %                         
+% % % %             obj.current_annotation = zeros(size(event_times,1),1);
+% % % %             obj.current_annotation_time = zeros(size(event_times,1),1);            
+% % % %             %
+% % % %             type_ind = 0; % for now...
+% % % %             %
+% % % % cnt = zeros(1,6);
+% % % %             %
+% % % %             for k = 1:length(event_times)
+% % % %                 obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
+% % % %                 switch char(event_types(k,1))
+% % % %                     case {'b' 'B' 'bb' 'bg'}
+% % % %                         type_ind = 1;                        
+% % % %                     case {'g' 'G' 'gg' 'gs'}
+% % % %                         type_ind = 2;
+% % % %                     case {'h' 'H'}
+% % % %                         type_ind = 2; % sic!
+% % % %                     case {'l' 'L'}
+% % % %                         type_ind = 2; % sic!
+% % % %                     case {'s' 'S' 'sg'}
+% % % %                         type_ind = 5;
+% % % %                     otherwise
+% % % %                         type_ind = 6; % ehm..
+% % % %                         disp(char(event_types(k,1)));
+% % % %                 end
+% % % %                 obj.current_annotation(k,1) = type_ind;
+% % % % cnt(type_ind) = cnt(type_ind)+1;
+% % % %             end            
+% % % %             %
+
+            % supposed to work only with b,g,s - starts
+            event_types = US_data(:,event_type_ind);
+            event_times = cell2mat(US_data(:,1));
+            %            
+            obj.current_annotation = [];
+            obj.current_annotation_time = [];            
             %
             for k = 1:length(event_times)
-                obj.current_annotation_time(k,1) = cell2mat(US_data(k,1));
+                type_ind = 0;
                 switch char(event_types(k,1))
                     case {'b' 'B' 'bb' 'bg'}
                         type_ind = 1;                        
                     case {'g' 'G' 'gg' 'gs'}
                         type_ind = 2;
-                    case {'h' 'H'}
-                        type_ind = 2; % sic!
-                    case {'l' 'L'}
-                        type_ind = 2; % sic!
                     case {'s' 'S' 'sg'}
                         type_ind = 5;
-                    otherwise
-                        type_ind = 6; % ehm..
-                        disp(char(event_types(k,1)));
                 end
-                obj.current_annotation(k,1) = type_ind;
-cnt(type_ind) = cnt(type_ind)+1;
+                if 0~=type_ind
+                    obj.current_annotation = [obj.current_annotation; type_ind];
+                    obj.current_annotation_time = [obj.current_annotation_time; event_times(k)];
+                end
             end            
-            %
+            % supposed to work only with b,g,s - end            
+            %            
             % extract annotation - ends            
             
             obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));
@@ -636,6 +662,17 @@ cnt(type_ind) = cnt(type_ind)+1;
                         end   
             end
             %
+            
+            %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - start 
+            BFw=1;
+            AFw=20; % before and after windows, in seconds
+            m_exclusion_mask = zeros(size(obj.current_ADC_segmented,1));
+            %
+            % to do
+            %
+            
+            %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - ends 
+            
             if strcmp(type,'annotator"s b/g/s') % undo segmentations
                 % same for all
                 SGM = zeros(1,size(obj.current_ADC_segmented,1));
