@@ -542,7 +542,9 @@ end
             event_times = cell2mat(US_data(:,1));
             %            
             obj.current_annotation = [];
-            obj.current_annotation_time = [];            
+            obj.current_annotation_time = [];
+            m_event_times = [];
+            m_event_types = [];
             %
             for k = 1:length(event_times)
                 type_ind = 0;
@@ -553,10 +555,19 @@ end
                         type_ind = 2;
                     case {'s' 'S' 'sg'}
                         type_ind = 5;
+                    case {'m' 'M'}
+                        type_ind = 6;
+                    case {'moving' 'MOVING'}                        
+                        type_ind = 7;
+                    case {'move' 'MOVE'}                        
+                        type_ind = 8;                        
                 end
-                if 0~=type_ind
+                if ~isempty(intersect(type_ind,[1 2 5]))
                     obj.current_annotation = [obj.current_annotation; type_ind];
                     obj.current_annotation_time = [obj.current_annotation_time; event_times(k)];
+                elseif type_ind >= 6 % move
+                    m_event_times = [m_event_times; event_times(k)];
+                    m_event_types = [m_event_types; type_ind];
                 end
             end            
             % supposed to work only with b,g,s - end            
@@ -661,16 +672,51 @@ end
                             end
                         end   
             end
+            %            
+            %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - start
+            % disp(obj.current_filename);
+            % disp(m_event_times');
+            % disp(m_event_types');
             %
-            
-            %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - start 
-            BFw=1;
-            AFw=20; % before and after windows, in seconds
-            m_exclusion_mask = zeros(size(obj.current_ADC_segmented,1));
+            LMAX = size(obj.current_ADC_segmented,1);
+            m_excl_mask = zeros(1,LMAX);
             %
-            % to do
-            %
-            
+            N_m_events = length(m_event_times);
+            if 0 == rem(N_m_events,2) % only if even
+                for k=1:2:N_m_events
+                    T1=m_event_times(k);
+                    T2=m_event_times(k+1);
+                    L1 = max(1,round(T1*obj.Fs_ADC));
+                    L2 = min(LMAX,round(T2*obj.Fs_ADC));
+                    m_excl_mask(L1:L2)=1;
+                end
+            end
+            if 0 ~= sum(m_excl_mask)
+                 for k = 1 : num_ADC_channels
+                     obj.current_ADC_segmented(:,k) = (~(m_excl_mask')) & obj.current_ADC_segmented(:,k);
+                 end                
+            end            
+                        
+%             BFw=5;
+%             AFw=15; % before and after windows, in seconds - Niamh Nowlan mail Tue 26/07/2016 16:42
+%             LMAX = size(obj.current_ADC_segmented,1);
+%             m_excl_mask = zeros(1,LMAX);
+%             %
+%             for k=1:length(m_event_times)
+%                 T0 = m_event_times(k);
+%                 T1 = T0 - BFw;
+%                 T2 = T0 + AFw;
+%                 L1 = max(1,round(T1*obj.Fs_ADC));
+%                 L2 = min(LMAX,round(T2*obj.Fs_ADC));
+%                 m_excl_mask(L1:L2)=1;
+%             end
+%             %
+%             if 0 ~= sum(m_excl_mask)
+%                  for k = 1 : num_ADC_channels
+%                      obj.current_ADC_segmented(:,k) = (~(m_excl_mask')) & obj.current_ADC_segmented(:,k);
+%                  end                
+%             end            
+              %
             %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - ends 
             
             if strcmp(type,'annotator"s b/g/s') % undo segmentations

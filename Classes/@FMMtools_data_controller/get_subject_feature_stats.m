@@ -43,7 +43,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 for k =1:length(anno)
                     A = anno(k);
                     cnt(A) = cnt(A)+1;
-                    
+                    %
                     T1 = anno_t(k)-3.5; % seconds
                     T2 = anno_t(k)+1.5; % seconds
                     %
