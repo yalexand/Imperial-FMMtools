@@ -572,10 +572,40 @@ end
             end            
             % supposed to work only with b,g,s - end            
             %            
-            % extract annotation - ends            
+            % extract annotation - ends   
+
+            obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));            
             
-            obj.current_ADC_segmented = zeros(size(obj.current_data.ADC));
-                               
+            % CREATING M-EVENTS EXCLUSION MASK - START
+            %
+            % HACKS            
+            if strcmp(obj.current_filename,'SUBJECT_009.mat')
+                % remove first one - unpaired
+                m_event_times = m_event_times(2:numel(m_event_times));
+            end
+            if strcmp(obj.current_filename,'SUBJECT_012.mat')
+                % remove last one - easy fix
+                m_event_times = m_event_times(1:numel(m_event_times)-1);
+            end            
+            % HACKS            
+            %
+            LMAX = size(obj.current_ADC_segmented,1);
+            m_excl_mask = zeros(LMAX,1);
+            %
+            N_m_events = length(m_event_times);
+            if 0 == rem(N_m_events,2) % only if even
+                for k=1:2:N_m_events
+                    T1=m_event_times(k);
+                    T2=m_event_times(k+1);
+                    if (T2-T1) < 120 % seconds - this is to treat subj. 8 :)
+                        L1 = max(1,round(T1*obj.Fs_ADC));
+                        L2 = min(LMAX,round(T2*obj.Fs_ADC));
+                        m_excl_mask(L1:L2)=1;
+                    end
+                end
+            end
+            % CREATING M-EVENTS EXCLUSION MASK - ENDS
+                                          
 %debug_h = figure();
             num_ADC_channels = size(obj.current_data.ADC,2);
 
@@ -605,6 +635,9 @@ end
                         %
                         if 0~=sum(z)
                             min_size = obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC;
+                            %
+                            % exclude m-events mask - before dilating
+                            z = z & (~m_excl_mask);
                             %
                             SE = strel('line',min_size,90);
                             z = imdilate(z,SE);                            
@@ -672,53 +705,7 @@ end
                             end
                         end   
             end
-            %            
-            %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - start
-            % disp(obj.current_filename);
-            % disp(m_event_times');
-            % disp(m_event_types');
-            %
-            LMAX = size(obj.current_ADC_segmented,1);
-            m_excl_mask = zeros(1,LMAX);
-            %
-            N_m_events = length(m_event_times);
-            if 0 == rem(N_m_events,2) % only if even
-                for k=1:2:N_m_events
-                    T1=m_event_times(k);
-                    T2=m_event_times(k+1);
-                    L1 = max(1,round(T1*obj.Fs_ADC));
-                    L2 = min(LMAX,round(T2*obj.Fs_ADC));
-                    m_excl_mask(L1:L2)=1;
-                end
-            end
-            if 0 ~= sum(m_excl_mask)
-                 for k = 1 : num_ADC_channels
-                     obj.current_ADC_segmented(:,k) = (~(m_excl_mask')) & obj.current_ADC_segmented(:,k);
-                 end                
-            end            
-                        
-%             BFw=5;
-%             AFw=15; % before and after windows, in seconds - Niamh Nowlan mail Tue 26/07/2016 16:42
-%             LMAX = size(obj.current_ADC_segmented,1);
-%             m_excl_mask = zeros(1,LMAX);
-%             %
-%             for k=1:length(m_event_times)
-%                 T0 = m_event_times(k);
-%                 T1 = T0 - BFw;
-%                 T2 = T0 + AFw;
-%                 L1 = max(1,round(T1*obj.Fs_ADC));
-%                 L2 = min(LMAX,round(T2*obj.Fs_ADC));
-%                 m_excl_mask(L1:L2)=1;
-%             end
-%             %
-%             if 0 ~= sum(m_excl_mask)
-%                  for k = 1 : num_ADC_channels
-%                      obj.current_ADC_segmented(:,k) = (~(m_excl_mask')) & obj.current_ADC_segmented(:,k);
-%                  end                
-%             end            
-              %
-            %%%%%%%%%%% eliminate "m" artefacts related to the motion of microphone - ends 
-            
+            %                        
             if strcmp(type,'annotator"s b/g/s') % undo segmentations
                 % same for all
                 SGM = zeros(1,size(obj.current_ADC_segmented,1));
