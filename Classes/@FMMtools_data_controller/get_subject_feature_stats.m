@@ -19,6 +19,8 @@ if isempty(obj.ADC_trails_features_data), return, end;
             d2 = obj.annotators_delay;
             d1 = obj.annotators_reaction; % [second] - minimal discernable time between event and annotation
             
+            logdata = [];
+            
             hw = waitbar(0,'calculating subject stats - please wait');
             for subj_ind = 1:length(obj.subj_filenames)
                 if ~isempty(hw), waitbar(subj_ind/length(obj.subj_filenames),hw); drawnow, end;
@@ -140,6 +142,17 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 params_data = [params_data num2cell(num_anno_out)];                
 
                 stats = [stats; params_data];
+                
+                num1 = tot_time - tot_time_ROIs;
+                denom1 = tot_time;
+                ratio1 = num1/denom1;
+                %
+                num2 = (sum( (~anno_tot) & (~dil_SGM) ))/obj.Fs_ADC;
+                denom2 = (sum( ~anno_tot))/obj.Fs_ADC;
+                ratio2 = num2/denom2;
+                
+                logdata = [logdata; [num1 denom1 ratio1 num2 denom2 ratio2] ];
+                
             end
             if ~isempty(hw), delete(hw), drawnow; end;            
             
