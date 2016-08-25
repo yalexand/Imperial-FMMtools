@@ -4,7 +4,6 @@ stats = [];
 
 if isempty(obj.ADC_trails_features_data), return, end;
             
-
             names = {'subject','tot time','tot_ROI_time','num_ROIs', 'num_annotations',...
                 'N_anno_B','N_anno_G','N_anno_H','N_anno_L','N_anno_S','N_anno_O', ...
                 'N_proj_B','N_proj_G','N_proj_H','N_proj_L','N_proj_S','N_proj_O'};
@@ -25,14 +24,9 @@ if isempty(obj.ADC_trails_features_data), return, end;
             for subj_ind = 1:length(obj.subj_filenames)
                 if ~isempty(hw), waitbar(subj_ind/length(obj.subj_filenames),hw); drawnow, end;
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
-
-                % one segmentation for all
-                num_ADC_channels = size(obj.current_data.ADC,2);
-                SGM = obj.current_ADC_segmented(:,1);
-                for k = 2 : num_ADC_channels
-                    SGM = SGM | obj.current_ADC_segmented(:,k);
-                end                
-                                
+                %
+                SGM = obj.get_joint_segmentation; % may be OR or AND regime
+                %
                 anno = obj.subj_data(subj_ind).annotation;
                 anno_t = obj.subj_data(subj_ind).annotation_time; 
                 N_annotated = length(anno);

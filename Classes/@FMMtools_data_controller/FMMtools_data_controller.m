@@ -107,6 +107,8 @@ classdef FMMtools_data_controller < handle
         %
         annotators_delay = 2; % seconds
         annotators_reaction = 0.4; % seconds
+        %
+        SGM_MODE = 'OR'; % 'AND2' is for AND with threshold on 2 detections
                         
     end    
         
@@ -401,6 +403,7 @@ end
                 settings.corr_map_W = obj.corr_map_W; 
                 %
                 settings.ExcelDirectory = obj.ExcelDirectory;
+                settings.SGM_MODE = obj.SGM_MODE;
             try
                 xml_write(fname,settings);
             catch
@@ -439,6 +442,7 @@ end
                 obj.corr_map_W = settings.corr_map_W; 
                 %
                 obj.ExcelDirectory = settings.ExcelDirectory;
+                obj.SGM_MODE = settings.SGM_MODE;
              end
         end
 %-------------------------------------------------------------------------%
@@ -786,12 +790,8 @@ end
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
                 %
                 num_ADC_channels = size(obj.current_data.ADC,2);        
-                %
-                % one segmentation for all
-                SGM = obj.current_ADC_segmented(:,1);
-                for k = 2 : num_ADC_channels
-                    SGM = SGM | obj.current_ADC_segmented(:,k);
-                end
+                %                
+                SGM = obj.get_joint_segmentation; % may be OR or AND regime
                 %
                 norm_meas = inf(1,num_ADC_channels);
                 %
@@ -1591,7 +1591,29 @@ a_ranksum = 0.01;
                     end            
         end
 %-------------------------------------------------------------------------%
-        
+function SGM = get_joint_segmentation(obj,~)
+                num_ADC_channels = size(obj.current_data.ADC,2); 
+                if strcmp(obj.SGM_MODE,'OR') % one segmentation for all
+                    SGM = obj.current_ADC_segmented(:,1);
+                    for k = 2 : num_ADC_channels
+                        SGM = SGM | obj.current_ADC_segmented(:,k);
+                    end
+                elseif strcmp(obj.SGM_MODE,'AND2')
+                    z = obj.current_ADC_segmented(:,1);
+                    for k = 2 : num_ADC_channels
+                        if 0~=sum(z)                    
+                            z = z + obj.current_ADC_segmented(:,k);
+                        end
+                    end
+                    z = (z>1);
+                    % dilate
+                    min_size = obj.ADC_segm_Minimal_Trail_Duration*obj.Fs_ADC;
+                    SE = strel('line',min_size,90);
+                    z = imdilate(z,SE);                            
+                    % dialte
+                    SGM = z;
+                end                
+end
         
         
 %-------------------------------------------------------------------------%         
