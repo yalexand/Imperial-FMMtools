@@ -124,16 +124,23 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % num_anno_out = round(sum(imdilate(SGM &~
                 % anno_tot,strel('line',round(2.5*obj.Fs_ADC),90)))/(5*obj.Fs_ADC)); % over esttimates 
                 % 
-                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(5*obj.Fs_ADC),90))); % dilate and count
+                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
                 %disp([max(z_lab) num_anno_out]);
                 num_anno_out = max(z_lab);
-
+                %
+                % another parameter requested - do the same but with total
+                % detection..
+                z_lab = bwlabel(imdilate(SGM,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
+                %disp([max(z_lab) num_anno_out]);
+                num_anno_according_to_detection = max(z_lab);
+                
                 params_data = [params_data num2cell(prcntg_anno_time_latent_also_latent_by_sensor)];
                 params_data = [params_data num2cell(n_active_channels)];
                 params_data = [params_data num2cell(n_used_channels)];
                 params_data = [params_data num2cell(tot_annotators_time)];
                 params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
-                params_data = [params_data num2cell(num_anno_out)];                
+                params_data = [params_data num2cell(num_anno_out)];
+                params_data = [params_data num2cell(num_anno_according_to_detection)];
 
                 stats = [stats; params_data];
                 
@@ -153,7 +160,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
             names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT', ...
                 'prcntg_anno_time_latent_also_latent_by_sensor', ...
                 'n_actv_dtctrs','n_used_dtctrs', ...
-                'tot_anno_time','num_anno_proj_ROIs','num_anno_out'}];            
+                'tot_anno_time','num_anno_proj_ROIs','num_anno_out','num_anno_according_to_detection'}];            
             
             stats = [names; stats];
 end
