@@ -124,7 +124,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % num_anno_out = round(sum(imdilate(SGM &~
                 % anno_tot,strel('line',round(2.5*obj.Fs_ADC),90)))/(5*obj.Fs_ADC)); % over esttimates 
                 % 
-                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
+                z_lab = bwlabel(imdilate(SGM &~ anno_tot,strel('line',round(5*obj.Fs_ADC),90))); % dilate and count
                 %disp([max(z_lab) num_anno_out]);
                 num_anno_out = max(z_lab);
 

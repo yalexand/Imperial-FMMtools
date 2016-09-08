@@ -778,6 +778,9 @@ end
                 
         end        
 %-------------------------------------------------------------------------%        
+
+
+% SPECIAL VERSION SUPPOSED TO SELECT ONLY 2 BEST DETECTORS
         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
 
             feats = []; 
@@ -790,10 +793,10 @@ end
                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
                 %
                 num_ADC_channels = size(obj.current_data.ADC,2);        
-                %                
-                SGM = obj.get_joint_segmentation; % may be OR or AND regime
                 %
-                norm_meas = inf(1,num_ADC_channels);
+                norm_meas = inf(1,num_ADC_channels); % fluctuations
+                sig_meas = zeros(1,num_ADC_channels); % signal
+                sgm_meas = zeros(1,num_ADC_channels); % total area of segmented stuff
                 %
                 num_ADC_channels = size(obj.current_data.ADC,2);
                 
@@ -806,19 +809,66 @@ end
                     data_LF_subtracted(:,k) = s;
                 end                    
                 %
+                IMU_mask = sum(obj.current_IMU_segmented,2);
+                IMU_mask(0~=IMU_mask)=1;   
+                N2 = size(obj.current_ADC_segmented,1);
+                exclusion_ADC_mask = (imresize(double(IMU_mask),[N2,1])>0.5);                
+                %
                 for k = 1 : num_ADC_channels
                     s = data_LF_subtracted(:,k); 
                     %    
-                    if 0~=sum(s) && 0~= sum(squeeze(obj.current_ADC_segmented(:,k)))
-                        fl = abs(s(~SGM));
-                        norm_meas(k) = median(fl(:)); % norma == the median of segmentation-rejecetd part of record
+                    SGM_K = squeeze(obj.current_ADC_segmented(:,k));
+                    if 0~=sum(s) && 0~= sum(SGM_K)
+                        z = s(s~=SGM_K);
+                        z = z(z~=exclusion_ADC_mask);
+                        fl = abs(z);
+                        sg = abs(s(SGM_K>0));
+                        norm_meas(k) = median(fl(:));   % norma == the median of segmentation-rejecetd part of record
+                        sig_meas(k) = mean(sg(:));      % the median of segmented part of record
+                        sgm_meas(k) = sum(SGM_K);
                     end
                 end
+                %                
+                % two modes of qualifier - best S/N or larger total
+                % segmentation
+                % qlfr = sig_meas./norm_meas;
+                qlfr = sgm_meas;
+                %                
+                % find two "best" detectors, basing on "qualifier"
+                qlfr_srtd = sort(qlfr);
+                % find two "best" detectors
+                D1_meas = qlfr_srtd(length(qlfr_srtd));
+                D2_meas = qlfr_srtd(length(qlfr_srtd)-1);
+                D1_ind = 0;
+                D2_ind = 0;
+                for k=1:length(qlfr)
+                    if qlfr(k)==D1_meas
+                        D1_ind=k;
+                    end
+                    if qlfr(k)==D2_meas
+                        D2_ind=k;
+                    end                    
+                end
+                
+                disp('-----------------------');
+                disp(char(obj.current_filename));
+                disp([D1_ind D2_ind]);
+                for k = 1 : num_ADC_channels
+                    disp([k norm_meas(k) sig_meas(k) qlfr(k)])
+                end
+                disp('-----------------------');
+                     
+                %
+                % conventional
+                % SGM = obj.get_joint_segmentation; % may be OR or AND regime                
+                %
+                % only 2 best detectors
+                SGM = obj.current_ADC_segmented(:,D1_ind) & obj.current_ADC_segmented(:,D2_ind);
                 %
                 z_lab = bwlabel(SGM);
                 %                                                                          
                 t =(0:length(SGM)-1)'/obj.Fs_ADC; % seconds
-                           
+                %                           
                 %%%%%%%%%%%% MATCHING - preparing objects, start
                 %
                 ANNO_MAP = zeros(size(z_lab));
@@ -958,6 +1008,190 @@ end
             trails_features = [fnames num2cell(feats)];            
 
         end
+%-------------------------------------------------------------------------%                
+
+
+
+%         function [trails_features, feature_names] = extract_features_current_ADC(obj,~,~)
+% 
+%             feats = []; 
+%             fnames = [];    
+%             
+%             hw = waitbar(0,'Extracting trails features - please wait');
+%             %
+%             for subj_ind = 1:length(obj.subj_filenames)                                  
+%                 %
+%                 obj.switch_current_to_subject(char(obj.subj_filenames(subj_ind)));
+%                 %
+%                 num_ADC_channels = size(obj.current_data.ADC,2);        
+%                 %                
+%                 SGM = obj.get_joint_segmentation; % may be OR or AND regime
+%                 %
+%                 norm_meas = inf(1,num_ADC_channels);
+%                 %
+%                 num_ADC_channels = size(obj.current_data.ADC,2);
+%                 
+%                 data_LF_subtracted = zeros(size(obj.current_ADC_pre_processed));
+%                 for k = 1 : num_ADC_channels
+%                     s = obj.current_ADC_pre_processed(:,k); 
+%                     % can't normalize otherwise - subtract LF trend
+%                     avr_window = round(obj.ADC_segm_Moving_Average_Window*obj.Fs_ADC);                        
+%                     [s,~] = TD_high_pass_filter( s, avr_window );                    
+%                     data_LF_subtracted(:,k) = s;
+%                 end                    
+%                 %
+%                 for k = 1 : num_ADC_channels
+%                     s = data_LF_subtracted(:,k); 
+%                     %    
+%                     if 0~=sum(s) && 0~= sum(squeeze(obj.current_ADC_segmented(:,k)))
+%                         fl = abs(s(~SGM));
+%                         norm_meas(k) = median(fl(:)); % norma == the median of segmentation-rejecetd part of record
+%                     end
+%                 end
+%                 %
+%                 z_lab = bwlabel(SGM);
+%                 %                                                                          
+%                 t =(0:length(SGM)-1)'/obj.Fs_ADC; % seconds
+%                            
+%                 %%%%%%%%%%%% MATCHING - preparing objects, start
+%                 %
+%                 ANNO_MAP = zeros(size(z_lab));
+%                 % to assign annotations
+%                 ANNO_NAT = zeros(1,max(z_lab)); % "natural"
+%                 ANNO_DOC = zeros(1,max(z_lab)); % "doctor's"
+%                 ANNO_AUT = zeros(1,max(z_lab)); % "automatic"
+%                 %
+%                 anno = obj.current_annotation;
+%                 anno_t = obj.current_annotation_time;
+%                 %
+%                 delay = 0.5; % sec
+%                 for k =1:length(anno)
+%                     A = anno(k);
+%                     pos = round((anno_t(k) - delay)*obj.Fs_ADC);
+%                     pos = max(1,pos);
+%                     pos = min(length(ANNO_MAP),pos);
+%                     ANNO_MAP(pos) = A;
+%                 end;
+%                 %
+%                 % 8 sec "dead zone", where ROI is too far from annotations
+%                 deadzone = ~imdilate(ANNO_MAP,strel('line',round(8*obj.Fs_ADC),90));
+%                 %
+%                 ANNO_MAP = dilate_labels(ANNO_MAP); % until 1 (maybe 2?)-gaps only
+%                 %
+%                 % DEBUG
+%                 %figure(22);
+%                 %plot(t,ANNO_MAP,'r-',t,SGM,'b-',t,-deadzone,'g-');                                    
+%                 %
+%                 %%%%%%%%%%%% MATCHING - preparing objects, ends
+%                 
+%                 feats_subj = [];
+%                 fnames_subj = [];
+%                 
+%                 hw1 = waitbar(0,['quantifying ROIs - ' char(obj.subj_filenames(subj_ind))]);                
+%                 for l=1:max(z_lab)
+%                     if ~isempty(hw1), waitbar(l/max(z_lab),hw1); drawnow, end;
+%                     %
+%                     % use "z_lab", "ANNO_MAP", and "deadzone" to do matching                    
+%                     ROI = (z_lab==l);
+%                     A = 0; % annotation
+%                     %
+%                     ROI_in_deadzone = (0~=sum(ROI&deadzone));
+%                     %
+%                     if ~ROI_in_deadzone
+%                         ROI_annos = ANNO_MAP(z_lab==l);
+%                         ROI_annos = ROI_annos(0~=ROI_annos);
+%                         ROI_annos_U = unique(ROI_annos);
+%                         if 1==length(ROI_annos_U)
+%                             A = ROI_annos_U;
+%                         elseif 2==length(ROI_annos_U) % judge by which one is more abundant
+%                             %
+%                             A1 = ROI_annos_U(1);
+%                             A2 = ROI_annos_U(2);
+%                             p1 = sum(A1==ROI_annos)/sum(ROI_annos(:));
+%                             if p1 > 0.6 % :) arbitrary
+%                                 A = A1;
+%                             elseif p1 < 0.4
+%                                 A = A2;
+%                             end
+%                             %
+%                         else
+%                             disp([l max(z_lab) ROI_annos_U']);
+%                         end
+%                     end
+%                     ANNO_NAT(1,l) = A;
+%                     % matching - finished
+%                     %
+%                     % for each segment.. look for best S/N channel
+%                     M = -Inf;
+%                     k_ = [];
+%                     for k = 1 : num_ADC_channels
+%                         ref = data_LF_subtracted(:,k);
+%                         signal = ref(z_lab==l);
+%                         measure = mean(abs(signal(:)))/norm_meas(k);
+%                         if measure >= M
+%                             k_=k;
+%                             M = measure;
+%                         end                        
+%                     end
+%                     %
+%                     ref = data_LF_subtracted(:,k_);
+%                     s_l = ref(z_lab==l);
+%                     %
+%                     % rest is more or less clear..
+%                         p1 = wentropy(s_l,'shannon')/length(s_l);
+%                         p2 = wentropy(s_l,'log energy')/length(s_l);
+%                             [C,L] = wavedec(s_l,6,'sym6');
+%                             [Ea,Ed] = wenergy(C,L); %these are normalized
+%                         p3 = Ea;
+%                         p4 = Ed; % this one, - contains 6 numbers
+%                         %
+%                         % start time, end time...
+%                         dt = t(z_lab==l);
+%                         t1 = min(dt(:));
+%                         t2 = max(dt(:));
+%                         %
+%                         % this is the place to calculate more features ...
+%                         %                    
+%                                                 
+%                         [ Omega, psd ] = PSD( s_l,obj.Fs_ADC );
+%                          
+%                         I1 = sum(psd(1.1<=Omega&Omega<=1.5)); % Heartbeat
+%                         I2 = sum(psd(2.2<=Omega&Omega<=3)); % 2x Heartbeat
+%                         I3 = sum(psd(6<=Omega&Omega<=9)); % 8.3 Hz
+%                          
+%                         ILF = sum(psd(0<=Omega&Omega<=16));
+%                          
+%                         R1 = I1/ILF;
+%                         R2 = I2/ILF;
+%                         R3 = I3/ILF;
+%                         %                             
+%                         prm = [k_ l t1 t2 length(s_l) p1 p2 p3 R1 R2 R3 p4];
+%                         if 0~=sum(isinf(prm)) || 0~=sum(isnan(prm))
+%                             disp(prm);
+%                         else
+%                             feats_subj = [feats_subj; [subj_ind k_ l t1 t2, ...
+%                                 ANNO_NAT(l), ANNO_DOC(l), ANNO_AUT(l),...
+%                                 length(s_l)/obj.Fs_ADC p1 p2 p3 R1 R2 R3 p4]];
+%                             fnames_subj = [fnames_subj; cellstr(obj.current_filename)];
+%                         end                                                                                                    
+%                 end % for l=1:max(z_lab)                                                            
+%                 if ~isempty(hw1), delete(hw1), drawnow; end;
+%                 %
+%                 feats = [feats; feats_subj];
+%                 fnames = [fnames; fnames_subj];
+%                 if ~isempty(hw), waitbar(subj_ind/length(obj.subj_filenames),hw); drawnow, end;                                    
+%             end % for subj_ind = 1:length(obj.subj_filenames)
+%             if ~isempty(hw), delete(hw), drawnow; end;
+%             %
+%             feature_names = {'filename','subject_index','detector_index','trail_index','t1','t2', ...
+%                 'anno_nat','anno_doc','anno_aut', ...
+%                 'trail_length', ...
+%                 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
+%             obj.ADC_fv_all = {'trail_length', 'entropy','energy','Ea','R1','R2','R3','Ed1','Ed2','Ed3','Ed4','Ed5','Ed6'};
+%             %        
+%             trails_features = [fnames num2cell(feats)];            
+% 
+%         end
 %-------------------------------------------------------------------------%                
         function pre_process_IMU(obj,type,~)
             
