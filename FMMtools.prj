@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="4129083765" file="C:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="C:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="3980909400" file="c:\Users\yalexand\Imperial-FMMtools\FMMtools.prj" location="c:\Users\yalexand\Imperial-FMMtools" name="FMMtools" preferred-package-location="c:\Users\yalexand\Imperial-FMMtools\FMMtools\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>FMMtools</param.appname>
     <param.icon>${PROJECT_ROOT}\FMMtools_resources\icon.ico</param.icon>
     <param.icons>
@@ -104,13 +104,13 @@
     </fileset.resources>
     <fileset.package />
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\FMMtools\for_testing" name="FMMtools.exe" optional="false">C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_testing\FMMtools.exe</file>
-      <file location="${PROJECT_ROOT}\FMMtools\for_testing" name="readme.txt" optional="true">C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_testing\readme.txt</file>
-      <file location="${PROJECT_ROOT}\FMMtools\for_testing" name="splash.png" optional="false">C:\Users\yalexand\Imperial-FMMtools\FMMtools\for_testing\splash.png</file>
+      <file location="${PROJECT_ROOT}\FMMtools\for_testing" name="FMMtools.exe" optional="false">c:\Users\yalexand\Imperial-FMMtools\FMMtools\for_testing\FMMtools.exe</file>
+      <file location="${PROJECT_ROOT}\FMMtools\for_testing" name="readme.txt" optional="true">c:\Users\yalexand\Imperial-FMMtools\FMMtools\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\FMMtools\for_testing" name="splash.png" optional="false">c:\Users\yalexand\Imperial-FMMtools\FMMtools\for_testing\splash.png</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\matlab\R2015a</root>
+      <root>c:\matlab\R2015a</root>
       <toolboxes>
         <toolbox name="matlabhdlcoder" />
         <toolbox name="fixedpoint" />

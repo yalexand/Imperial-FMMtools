@@ -860,10 +860,10 @@ end
                      
                 %
                 % conventional
-                % SGM = obj.get_joint_segmentation; % may be OR or AND regime                
+                SGM = obj.get_joint_segmentation; % may be OR or AND regime                
                 %
                 % only 2 best detectors
-                SGM = obj.current_ADC_segmented(:,D1_ind) & obj.current_ADC_segmented(:,D2_ind);
+                % SGM = obj.current_ADC_segmented(:,D1_ind) & obj.current_ADC_segmented(:,D2_ind);
                 %
                 z_lab = bwlabel(SGM);
                 %                                                                          
