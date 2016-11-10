@@ -120,11 +120,11 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 % number of active channels
                 %
                 
-                % number of "physician'sannotations according to detection" - estimate
+                % number of "physician's annotations according to detection" - estimate
                 dtct_annos = bwlabel(imdilate(SGM,strel('line',round(2.5*obj.Fs_ADC),90))); % dilate and count
                 num_anno_according_to_detection = max(dtct_annos);
                                                 
-                % how nmany of these "physician'sannotations according to detection" are out of annotations?
+                % how nmany of these "physician's annotations according to detection" are out of annotations?
                 n_intersect = 0;
                 for l=1:num_anno_according_to_detection
                     if 0~=sum((dtct_annos==l).*anno_tot)
