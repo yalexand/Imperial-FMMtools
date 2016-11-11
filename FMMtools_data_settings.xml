@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+   <DefaultDirectory>C:\Users\yalexand\Imperial_2016\Ravi Vaidyanathan\data\</DefaultDirectory>
+   <Fs_ADC>1024</Fs_ADC>
+   <Fs_IMU>64</Fs_IMU>
+   <ADC_prprss_Median_Size>3</ADC_prprss_Median_Size>
+   <ADC_prprss_notch_comb_fb>39.1328</ADC_prprss_notch_comb_fb>
+   <ADC_prprss_notch_comb_bw>0.0022</ADC_prprss_notch_comb_bw>
+   <ADC_segm_Moving_Average_Window>5</ADC_segm_Moving_Average_Window>
+   <ADC_segm_Minimal_Trail_Duration>1.2</ADC_segm_Minimal_Trail_Duration>
+   <ADC_fv_selected>
+      <item>entropy</item>
+      <item>energy</item>
+      <item>Ea</item>
+      <item>R1</item>
+      <item>R2</item>
+      <item>R3</item>
+      <item>Ed1</item>
+      <item>Ed2</item>
+      <item>Ed3</item>
+      <item>Ed4</item>
+      <item>Ed5</item>
+      <item>Ed6</item>
+   </ADC_fv_selected>
+   <exclude_IMU>[true]</exclude_IMU>
+   <IMU_sgm_low_signal_quantile>0.1</IMU_sgm_low_signal_quantile>
+   <IMU_sgm_signal_cutoff>0.05</IMU_sgm_signal_cutoff>
+   <IMU_sgm_SN>200</IMU_sgm_SN>
+   <ADC_sgm_low_signal_quantile>0.1</ADC_sgm_low_signal_quantile>
+   <ADC_sgm_signal_cutoff>0.004</ADC_sgm_signal_cutoff>
+   <ADC_sgm_SN>150</ADC_sgm_SN>
+   <annotators_delay>2</annotators_delay>
+   <annotators_reaction>0.4</annotators_reaction>
+   <corr_map_W>80</corr_map_W>
+   <ExcelDirectory>c:\Program Files (x86)\Microsoft Office\Office15\EXCEL.EXE</ExcelDirectory>
+   <SGM_MODE>AND2</SGM_MODE>
+</settings>

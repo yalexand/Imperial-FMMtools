@@ -1598,6 +1598,12 @@ function SGM = get_joint_segmentation(obj,~)
                     for k = 2 : num_ADC_channels
                         SGM = SGM | obj.current_ADC_segmented(:,k);
                     end
+                elseif strcmp(obj.SGM_MODE,'OR_SCRAMBLED') % one segmentation for all
+                    SGM = obj.current_ADC_segmented(:,1);
+                    for k = 2 : num_ADC_channels
+                        SGM = SGM | obj.current_ADC_segmented(:,k);
+                    end    
+                    SGM = scramble_ROIs(SGM)';
                 elseif strcmp(obj.SGM_MODE,'AND2')
                     z = obj.current_ADC_segmented(:,1);
                     for k = 2 : num_ADC_channels
