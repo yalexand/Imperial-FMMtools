@@ -33,5 +33,5 @@
    <annotators_reaction>0.4</annotators_reaction>
    <corr_map_W>80</corr_map_W>
    <ExcelDirectory>c:\Program Files (x86)\Microsoft Office\Office15\EXCEL.EXE</ExcelDirectory>
-   <SGM_MODE>AND2</SGM_MODE>
+   <SGM_MODE>OR</SGM_MODE>
 </settings>
