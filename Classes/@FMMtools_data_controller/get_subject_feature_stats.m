@@ -133,6 +133,9 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 end
                 num_anno_out = num_anno_according_to_detection - n_intersect;                
                 %
+                %... duration of ROIs only during the doctor’s annotated times
+                % SGM and anno_tot
+                duration_of_ROIs_only_during_the_doctors_annotated_times = sum(SGM & anno_tot)/obj.Fs_ADC;
                 
                 params_data = [params_data num2cell(prcntg_anno_time_latent_also_latent_by_sensor)];
                 params_data = [params_data num2cell(n_active_channels)];
@@ -141,6 +144,7 @@ if isempty(obj.ADC_trails_features_data), return, end;
                 params_data = [params_data num2cell(tot_annotators_projected_ROIs)];
                 params_data = [params_data num2cell(num_anno_out)];
                 params_data = [params_data num2cell(num_anno_according_to_detection)];
+                params_data = [params_data num2cell(duration_of_ROIs_only_during_the_doctors_annotated_times)];
 
                 stats = [stats; params_data];
                 
@@ -160,7 +164,8 @@ if isempty(obj.ADC_trails_features_data), return, end;
             names = [names {'mean_ltntT','std_ltntT','Q25_ltntT','median_ltntT','Q75_ltntT', ...
                 'prcntg_anno_time_latent_also_latent_by_sensor', ...
                 'n_actv_dtctrs','n_used_dtctrs', ...
-                'tot_anno_time','num_anno_proj_ROIs','num_anno_out','num_anno_according_to_detection'}];            
+                'tot_anno_time','num_anno_proj_ROIs','num_anno_out','num_anno_according_to_detection', ...
+                'duration_of_ROIs_only_during_the_doctors_annotated_times'}];            
             
             stats = [names; stats];
 end
