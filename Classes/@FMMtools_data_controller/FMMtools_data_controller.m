@@ -1688,6 +1688,22 @@ function SGM = get_joint_segmentation(obj,~)
                     disp('-----------------------');
                     %
                     SGM = obj.current_ADC_segmented(:,D1_ind) & obj.current_ADC_segmented(:,D2_ind);                                        
+               elseif strcmp(obj.SGM_MODE,'RANDOM') % one segmentation for all
+                    SGM = zeros(size(obj.current_ADC_segmented(:,1)));
+                    %
+                    N = 200 + randi(5); % number of ROIs
+                    %
+                    for k=1:N
+                        %
+                        dur = 1.8 + (rand-0.6); % duration in seconds
+                        W = round(dur/2*obj.Fs_ADC);
+                        t0 = randi(length(SGM));
+                        LB = max(1,t0-W);
+                        RB = min(length(SGM),t0+W);
+                        %
+                        SGM(LB:RB) = 1;                        
+                    end 
+                    disp(sum(SGM(:))/length(SGM));
                 end                
 end
                 
