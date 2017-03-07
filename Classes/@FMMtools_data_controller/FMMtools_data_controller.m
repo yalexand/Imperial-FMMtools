@@ -554,9 +554,10 @@ end
                 type_ind = 0;
                 switch char(event_types(k,1))
                     case {'b' 'B' 'bb' 'bg'}
-                        type_ind = 1;                        
+                        %type_ind = 1; 
+                        type_ind = 2; % lumping B and G together                        
                     case {'g' 'G' 'gg' 'gs'}
-                        type_ind = 2;
+                        type_ind = 2;                         
                     case {'s' 'S' 'sg'}
                         type_ind = 5;
                     case {'m' 'M'}
